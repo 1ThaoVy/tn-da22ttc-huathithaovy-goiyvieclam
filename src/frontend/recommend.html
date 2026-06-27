@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title> Gợi Ý Việc Làm — SmartJob</title>
+  <meta name="description" content="AI phân tích kỹ năng và gợi ý công việc phù hợp nhất với bạn.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/tailwind-config.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .recommend-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .recommend-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--gradient-primary);
+    }
+    .recommend-card:hover {
+      border-color: rgba(99,102,241,0.4);
+      box-shadow: var(--shadow-glow);
+      transform: translateY(-3px);
+    }
+    .rank-badge {
+      position: absolute;
+      top: 16px; right: 16px;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--gradient-primary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800; color: white;
+    }
+    .rank-badge.gold { background: linear-gradient(135deg,#f59e0b,#fbbf24); }
+    .rank-badge.silver { background: linear-gradient(135deg,#94a3b8,#cbd5e1); }
+    .rank-badge.bronze { background: linear-gradient(135deg,#d97706,#b45309); }
+  </style>
+</head>
+<body>
+  <nav class="navbar" id="navbar"></nav>
+  <div class="page-wrapper">
+
+    <!-- Hero header -->
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,0.12) 0%,rgba(139,92,246,0.08) 100%);border-bottom:1px solid var(--border);padding:40px 0">
+      <div class="max-w-7xl mx-auto px-5">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px">
+          <div>
+            <div class="hero-badge mb-8"><span></span><span>Gợi ý thông minh</span></div>
+            <h1 style="font-size:32px;margin-bottom:8px">Việc Làm <span class="text-primary">Được Gợi Ý Cho Bạn</span></h1>
+            <p class="text-slate-500 text-[13px]">Hệ thống phân tích kỹ năng của bạn và đề xuất công việc phù hợp nhất</p>
+          </div>
+          <div style="display:flex;gap:12px;align-items:center">
+            <a href="/profile.html#skills" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-transparent text-primary-light border-[1.5px] border-primary text-[13px] font-semibold rounded-lg transition-all hover:bg-primary hover:text-white hover:-translate-y-0.5 cursor-pointer whitespace-nowrap"> Cập nhật kỹ năng</a>
+            <button class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap" onclick="loadRecommendations(true)">🔄 Cập nhật gợi ý</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-5 py-[60px]" style="padding-top:32px">
+
+      <!-- Skill Summary -->
+      <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg mb-8" id="skillSummary" style="display:none">
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h3 style="font-size:15px">📊 Kỹ năng của bạn</h3>
+            <a href="/profile.html" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-black/5 text-slate-500 border border-slate-200 text-[13px] font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:text-primary cursor-pointer whitespace-nowrap !px-3 !py-1.5 !text-xs !rounded-md">Chỉnh sửa →</a>
+          </div>
+          <div id="skillChips" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div id="loadingSection" class="text-center" style="padding:80px 0">
+        <div style="position:relative;width:80px;height:80px;margin:0 auto 24px">
+          <div class="loading-spinner" style="width:80px;height:80px;border-width:4px"></div>
+          <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:24px"></span>
+        </div>
+        <h3 style="margin-bottom:8px">AI đang phân tích kỹ năng...</h3>
+        <p class="text-slate-500 text-[13px]">Tìm kiếm công việc phù hợp nhất với bạn</p>
+      </div>
+
+      <!-- No skills state -->
+      <div id="noSkillsSection" style="display:none;padding:80px 0" class="text-center">
+        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg" style="max-width:480px;margin:0 auto;padding:48px 32px">
+          <div style="font-size:64px;margin-bottom:20px"></div>
+          <h2 style="margin-bottom:12px">Chưa có kỹ năng nào!</h2>
+          <p class="text-slate-500 text-[13px]" style="margin-bottom:28px">Hãy thêm kỹ năng vào hồ sơ để AI có thể gợi ý những công việc phù hợp nhất với bạn.</p>
+          <a href="/profile.html" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap !px-7 !py-3.5 !text-base">➕ Thêm kỹ năng ngay</a>
+        </div>
+      </div>
+
+      <!-- No results -->
+      <div id="noResultSection" style="display:none" class="text-center">
+        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg" style="max-width:480px;margin:0 auto;padding:48px 32px">
+          <div style="font-size:64px;margin-bottom:20px"></div>
+          <h2 style="margin-bottom:12px">Chưa tìm được việc phù hợp</h2>
+          <p class="text-slate-500 text-[13px]" style="margin-bottom:28px">Có thể bộ lọc địa điểm hoặc loại hình đang thu hẹp kết quả. Thử điều chỉnh sở thích hoặc thêm thêm kỹ năng.</p>
+          <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+            <a href="/profile.html" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap !px-5 !py-2.5"> Điều chỉnh sở thích</a>
+            <a href="/profile.html" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-transparent text-primary-light border-[1.5px] border-primary text-[13px] font-semibold rounded-lg transition-all hover:bg-primary hover:text-white hover:-translate-y-0.5 cursor-pointer whitespace-nowrap !px-5 !py-2.5"> Cập nhật kỹ năng</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="resultsSection" style="display:none">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <span id="resultInfo" class="text-slate-500 text-[13px]"></span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="text-slate-500 text-[13px]">Lọc:</span>
+            <select id="filterScore" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" style="width:auto;font-size:13px;padding:6px 12px" onchange="filterResults()">
+              <option value="0">Tất cả</option>
+              <option value="70">Phù hợp cao (≥70%)</option>
+              <option value="40">Phù hợp vừa (≥40%)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:20px" id="recommendList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+  <script src="/js/api.js"></script>
+  <script>
+    if (!requireAuth()) {}
+
+    let allRecs = [];
+
+    async function loadRecommendations(forceRefresh = false) {
+      document.getElementById('loadingSection').style.display = 'block';
+      document.getElementById('noSkillsSection').style.display = 'none';
+      document.getElementById('noResultSection').style.display = 'none';
+      document.getElementById('resultsSection').style.display = 'none';
+      document.getElementById('skillSummary').style.display = 'none';
+
+      try {
+        const [recData, skillData] = await Promise.all([
+          API.recommend.get(),
+          API.users.getSkills()
+        ]);
+
+        document.getElementById('loadingSection').style.display = 'none';
+
+        // Show user skills
+        if (skillData.skills && skillData.skills.length > 0) {
+          document.getElementById('skillSummary').style.display = 'block';
+          document.getElementById('skillChips').innerHTML = skillData.skills.map(s => `
+            <span class="skill-tag">${s.ten_ky_nang} <span style="opacity:0.6;font-size:10px">Lv.${s.muc_do}</span></span>
+          `).join('');
+        }
+
+        if (recData.message && recData.recommendations.length === 0) {
+          document.getElementById('noSkillsSection').style.display = 'block';
+          return;
+        }
+
+        allRecs = recData.recommendations;
+
+        if (allRecs.length === 0) {
+          document.getElementById('noResultSection').style.display = 'block';
+          return;
+        }
+
+        document.getElementById('resultsSection').style.display = 'block';
+
+        // Hiển thị thông tin bộ lọc đang áp dụng
+        const loaiHinhLabels = { toan_thoi_gian: 'Toàn thời gian', ban_thoi_gian: 'Bán thời gian', tu_do: 'Tự do', thuc_tap: 'Thực tập', tat_ca: '' };
+        const filters = recData.filters || {};
+        const filterBadges = [];
+        if (filters.loaiHinhMongMuon && filters.loaiHinhMongMuon !== 'tat_ca') {
+          filterBadges.push(`<span style="background:rgba(99,102,241,0.12);color:var(--primary-light);border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600"> ${loaiHinhLabels[filters.loaiHinhMongMuon] || filters.loaiHinhMongMuon}</span>`);
+        }
+        if (filters.diaChiMongMuon) {
+          filterBadges.push(`<span style="background:rgba(16,185,129,0.12);color:#10b981;border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600"> ${filters.diaChiMongMuon}</span>`);
+        }
+
+        let filterHtml = filterBadges.length
+          ? `&nbsp;· Lọc theo: ${filterBadges.join(' ')} <a href="/profile.html" style="font-size:12px;color:var(--primary-light);margin-left:4px">Thay đổi →</a>`
+          : '';
+
+        // Cảnh báo nếu bộ lọc phụ bị bỏ qua (không có job nào khớp địa điểm/loại hình)
+        if (recData.prefsFilterIgnored) {
+          filterHtml += `<div style="margin-top:10px;padding:10px 14px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:8px;font-size:13px;color:#d97706">
+            ⚠️ Không tìm thấy việc khớp với sở thích của bạn — đang hiển thị tất cả kết quả theo kỹ năng.
+            <a href="/profile.html" style="color:var(--primary-light);font-weight:600;margin-left:4px">Điều chỉnh sở thích →</a>
+          </div>`;
+        }
+
+        document.getElementById('resultInfo').innerHTML = `Tìm thấy <strong>${allRecs.length}</strong> công việc phù hợp từ ${recData.totalJobs} công việc (dựa trên ${recData.userSkillCount} kỹ năng của bạn)${filterHtml}`;
+        renderRecommendations(allRecs);
+
+      } catch(e) {
+        document.getElementById('loadingSection').style.display = 'none';
+        showToast('Không tải được gợi ý. Vui lòng đăng nhập lại.', 'error');
+      }
+    }
+
+    function filterResults() {
+      const minScore = parseInt(document.getElementById('filterScore').value) || 0;
+      const filtered = allRecs.filter(r => r.score >= minScore);
+      renderRecommendations(filtered);
+    }
+
+    function renderRecommendations(recs) {
+      const list = document.getElementById('recommendList');
+      if (!recs.length) {
+        list.innerHTML = `<div class="empty-state"><div class="empty-state-icon"></div><div class="empty-state-title">Không có kết quả phù hợp bộ lọc</div></div>`;
+        return;
+      }
+
+      list.innerHTML = recs.map((job, i) => {
+        const scoreClass = getScoreClass(job.score);
+        const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+        const rankEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1);
+
+        return `
+          <div class="recommend-card animate-fadeInUp" style="animation-delay:${i * 0.06}s;cursor:pointer" onclick="window.location.href='/job-detail.html?id=${job.id}'">
+            <div class="rank-badge ${rankClass}">${rankEmoji}</div>
+
+            <div style="display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;padding-right:40px">
+              <div class="company-logo" style="width:52px;height:52px;font-size:20px;flex-shrink:0">${getInitials(job.ten_cong_ty)}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:17px;font-weight:700;margin-bottom:4px">${job.tieu_de}</div>
+                <div style="color:var(--text-slate-600);font-size:13px;margin-bottom:8px"> ${job.ten_cong_ty} &nbsp;•&nbsp;  ${job.dia_chi || 'Linh hoạt'}</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <span class="badge ${job.loai_hinh === 'thuc_tap' ? 'bg-cyan-500/15 text-cyan-500 border border-cyan-500/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium' : 'bg-primary/15 text-primary-light border border-primary/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium'}">${getJobTypeLabel(job.loai_hinh)}</span>
+                  <span class="salary-badge"> ${formatSalary(job.muc_luong_min, job.muc_luong_max)}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Match Score -->
+            <div style="background:rgba(99,102,241,0.07);border-radius:var(--radius-md);padding:16px;margin-bottom:16px" class="${scoreClass}">
+              <div class="flex items-center justify-between mb-8">
+                <span style="font-size:13px;font-weight:600">Mức độ phù hợp</span>
+                <span style="font-size:22px;font-weight:900" class="match-score-value">${job.score}%</span>
+              </div>
+              <div class="match-score-bar">
+                <div class="match-score-fill" style="width:0%" data-target="${job.score}"></div>
+              </div>
+              <div class="text-slate-500 text-sm mt-8">${getMatchLabel(job.score)}</div>
+            </div>
+
+            <!-- Skills breakdown -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+              <div>
+                <div class="text-slate-500 text-[13px] mb-8"> Kỹ năng phù hợp (${job.matchedSkills.length})</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px">
+                  ${job.matchedSkills.map(s => `<span class="skill-tag" style="background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#10b981">${s.ten_ky_nang}</span>`).join('') || '<span class="text-slate-500 text-[13px]" style="font-size:12px">Không có</span>'}
+                </div>
+              </div>
+              <div>
+                <div class="text-slate-500 text-[13px] mb-8"> Còn thiếu (${job.missingSkills.length})</div>
+                <div style="display:flex;flex-wrap:wrap;gap:5px">
+                  ${job.missingSkills.slice(0,4).map(s => `<span class="skill-tag" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.25);color:#ef4444">${s.ten_ky_nang}</span>`).join('') || '<span style="font-size:12px;color:var(--success)">Đủ tất cả! </span>'}
+                  ${job.missingSkills.length > 4 ? `<span class="badge bg-black/5 text-slate-500 border border-slate-200 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium">+${job.missingSkills.length - 4}</span>` : ''}
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between" style="border-top:1px solid var(--border);padding-top:14px">
+              <span class="text-slate-500 text-[13px]"> ${formatRelativeTime(job.ngay_tao)}</span>
+              <a href="/job-detail.html?id=${job.id}" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap !px-3 !py-1.5 !text-xs !rounded-md" onclick="event.stopPropagation()">
+                Xem & Ứng tuyển →
+              </a>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Animate score bars after render
+      setTimeout(() => {
+        document.querySelectorAll('.match-score-fill[data-target]').forEach(el => {
+          el.style.width = el.dataset.target + '%';
+        });
+      }, 100);
+    }
+
+    function getMatchLabel(score) {
+      if (score >= 80) return ' Tuyệt vời! Bạn rất phù hợp với công việc này.';
+      if (score >= 60) return ' Phù hợp tốt. Nên cân nhắc ứng tuyển!';
+      if (score >= 40) return ' Phù hợp vừa. Có thể cần học thêm một số kỹ năng.';
+      return ' Phù hợp thấp. Hãy phát triển thêm kỹ năng để cơ hội cao hơn.';
+    }
+
+    loadRecommendations();
+  </script>
+</body>
+</html>

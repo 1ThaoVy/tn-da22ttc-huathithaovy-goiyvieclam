@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý Ứng tuyển — Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/tailwind-config.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body{background:#f8fafc}
+    .sidebar{background:linear-gradient(180deg,#1e1b4b 0%,#312e81 100%);padding:0;position:sticky;top:0;height:100vh;width:240px;display:flex;flex-direction:column;z-index:100}
+    .sidebar-brand{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:10px}
+    .sidebar-brand span{font-size:20px;font-weight:800;color:white}
+    .sidebar-nav{padding:16px 12px;flex:1}
+    .nav-section{font-size:10px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;padding:12px 8px 6px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:rgba(255,255,255,0.65);font-size:13px;font-weight:500;transition:all 0.15s;text-decoration:none;margin-bottom:2px}
+    .nav-item:hover{background:rgba(255,255,255,0.1);color:white}
+    .nav-item.active{background:rgba(255,255,255,0.15);color:white;font-weight:600}
+    .nav-item .icon{font-size:16px;width:20px;text-align:center}
+    .sidebar-footer{padding:16px 12px;border-top:1px solid rgba(255,255,255,0.1)}
+    .main-content{padding:28px 32px;overflow-y:auto}
+    table{width:100%;border-collapse:collapse}
+    th{background:#f1f5f9;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;padding:10px 14px;text-align:left}
+    td{padding:12px 14px;border-bottom:1px solid #f1f5f9;font-size:13px;vertical-align:middle}
+    tr:hover td{background:#fafafa}
+  </style>
+</head>
+<body>
+  <div style="display:grid;grid-template-columns:240px 1fr;min-height:100vh">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="/images/logo.png" alt="logo" style="width:32px;height:32px;object-fit:contain">
+        <span>SmartJob</span>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">Tổng quan</div>
+        <a href="/admin/dashboard.html" class="nav-item"><span class="icon">📊</span> Dashboard</a>
+        <div class="nav-section">Quản lý</div>
+        <a href="/admin/users.html" class="nav-item"><span class="icon">👥</span> Người dùng</a>
+        <a href="/admin/jobs.html" class="nav-item"><span class="icon">💼</span> Công việc</a>
+        <a href="/admin/applications.html" class="nav-item active"><span class="icon">📄</span> Ứng tuyển</a>
+        <a href="/admin/companies.html" class="nav-item"><span class="icon">🏢</span> Công ty</a>
+        <div class="nav-section">Hệ thống</div>
+        <a href="/index.html" class="nav-item"><span class="icon">🌐</span> Trang chủ</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">
+          <div id="sbAv" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">A</div>
+          <div>
+            <div id="sbName" style="font-size:13px;font-weight:600;color:#fff">Admin</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4)">Quản trị viên</div>
+          </div>
+        </div>
+        <button onclick="handleLogout()" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer">🚪 Đăng xuất</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h1 style="font-size:22px;font-weight:800;margin-bottom:2px">📄 Quản lý Ứng tuyển</h1>
+          <p style="font-size:13px;color:#64748b">Tất cả hồ sơ ứng tuyển trong hệ thống</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="text" id="searchInput" placeholder="🔍 Tìm ứng viên, công việc..." style="padding:9px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;min-width:220px" oninput="loadApps()">
+          <select id="filterJob" style="padding:9px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;min-width:200px" onchange="loadApps()">
+            <option value="">💼 Tất cả công việc</option>
+          </select>
+          <select id="filterStatus" style="padding:9px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none" onchange="loadApps()">
+            <option value="">Tất cả trạng thái</option>
+            <option value="cho_duyet">⏳ Chờ duyệt</option>
+            <option value="chap_nhan">✅ Chấp nhận</option>
+            <option value="tu_choi">❌ Từ chối</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="background:white;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden">
+        <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9">
+          <span id="resultLabel" style="font-size:13px;color:#64748b"></span>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Ứng viên</th>
+                <th>Công việc</th>
+                <th>Công ty</th>
+                <th>Ngày nộp</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="appsTable">
+              <tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8">Đang tải...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="pagination" style="padding:16px 20px;display:flex;gap:6px;justify-content:center"></div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+  <script src="/js/api.js"></script>
+  <script>
+    if (!requireAuth()) {}
+    const user = getUser();
+    if (!user || user.vai_tro !== 'admin') window.location.href = '/index.html';
+    if (user) {
+      document.getElementById('sbName').textContent = user.ten || 'Admin';
+      document.getElementById('sbAv').textContent = user.ten ? user.ten.split(' ').pop()[0].toUpperCase() : 'A';
+    }
+
+    let currentPage = 1;
+    let _appCache = {};
+    const statusMap = {
+      cho_duyet: { bg:'rgba(245,158,11,0.1)', color:'#f59e0b', label:'⏳ Chờ duyệt' },
+      chap_nhan: { bg:'rgba(16,185,129,0.1)', color:'#10b981', label:'✅ Chấp nhận' },
+      tu_choi:   { bg:'rgba(239,68,68,0.1)',  color:'#ef4444', label:'❌ Từ chối' },
+    };
+
+    async function init() {
+      // Load jobs cho filter
+      try {
+        const data = await API.admin.getJobs();
+        const sel = document.getElementById('filterJob');
+        (data.jobs || []).forEach(j => {
+          const opt = document.createElement('option');
+          opt.value = j.id; opt.textContent = `💼 ${j.tieu_de}`;
+          sel.appendChild(opt);
+        });
+        // Check URL param
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('job')) sel.value = params.get('job');
+      } catch(e) {}
+      loadApps();
+    }
+
+    async function loadApps() {
+      const trang_thai = document.getElementById('filterStatus').value;
+      const cong_viec_id = document.getElementById('filterJob').value;
+      const search = document.getElementById('searchInput').value;
+      try {
+        const data = await API.admin.getApplications({ trang_thai, cong_viec_id, page: currentPage, limit: 20 });
+        // Client-side search filter
+        let apps = data.applications;
+        if (search) {
+          const q = search.toLowerCase();
+          apps = apps.filter(a => a.ung_vien.toLowerCase().includes(q) || a.cong_viec.toLowerCase().includes(q) || (a.email_ung_vien||'').toLowerCase().includes(q));
+        }
+        document.getElementById('resultLabel').textContent = `${data.pagination.total} hồ sơ${search ? ` (lọc: ${apps.length})` : ''}`;
+        document.getElementById('appsTable').innerHTML = apps.map((a, i) => {
+          _appCache[a.id] = a;
+          const s = statusMap[a.trang_thai] || {};
+          return `<tr>
+            <td style="color:#94a3b8;font-size:12px">${(currentPage-1)*20+i+1}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="width:30px;height:30px;border-radius:50%;background:#6366f1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;flex-shrink:0">${getInitials(a.ung_vien)}</div>
+                <div>
+                  <div style="font-weight:600">${a.ung_vien}</div>
+                  <div style="font-size:11px;color:#94a3b8">${a.email_ung_vien}</div>
+                </div>
+              </div>
+            </td>
+            <td style="font-weight:500">${a.cong_viec}</td>
+            <td style="color:#64748b">${a.ten_cong_ty}</td>
+            <td style="color:#94a3b8;font-size:12px">${formatRelativeTime(a.ngay_ung_tuyen)}</td>
+            <td><span style="background:${s.bg};color:${s.color};border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600">${s.label}</span></td>
+            <td>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button onclick="viewApp(${a.id})" style="background:rgba(6,182,212,0.1);color:#06b6d4;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600">👁️ Xem</button>
+                ${a.trang_thai === 'cho_duyet' ? `
+                  <button onclick="updateStatus(${a.id},'chap_nhan',this)" style="background:#10b981;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:white;font-weight:600">✓ Duyệt</button>
+                  <button onclick="updateStatus(${a.id},'tu_choi',this)" style="background:#ef4444;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:white;font-weight:600">✗ Từ chối</button>
+                ` : ''}
+                ${a.cv_file_name ? `` : ''}
+                <button onclick="deleteApp(${a.id})" style="background:rgba(239,68,68,0.1);color:#ef4444;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600">🗑️</button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('') || '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8">Không có dữ liệu</td></tr>';
+
+        renderPagination(data.pagination);
+      } catch(e) { showToast('Không tải được dữ liệu.', 'error'); }
+    }
+
+    async function updateStatus(id, status, btn) {
+      btn.disabled = true;
+      try {
+        await API.admin.updateApplication(id, { trang_thai: status });
+        showToast('Cập nhật thành công.', 'success');
+        loadApps();
+      } catch(e) { showToast('Thất bại.', 'error'); btn.disabled = false; }
+    }
+
+    function renderPagination(p) {
+      const el = document.getElementById('pagination');
+      const totalPages = Math.ceil(p.total / p.limit);
+      if (totalPages <= 1) { el.innerHTML = ''; return; }
+      let html = '';
+      for (let i = 1; i <= totalPages; i++) {
+        html += `<button onclick="goPage(${i})" style="padding:6px 12px;border-radius:8px;border:1px solid ${i===currentPage?'#6366f1':'#e2e8f0'};background:${i===currentPage?'#6366f1':'white'};color:${i===currentPage?'white':'#64748b'};font-size:13px;cursor:pointer">${i}</button>`;
+      }
+      el.innerHTML = html;
+    }
+
+    function goPage(p) { currentPage = p; loadApps(); }
+
+    async function deleteApp(id) {
+      if (!confirm('Xóa hồ sơ ứng tuyển này?')) return;
+      try {
+        await API.admin.deleteApplication(id);
+        showToast('Đã xóa hồ sơ.', 'success');
+        loadApps();
+      } catch(e) { showToast(e.message || 'Xóa thất bại.', 'error'); }
+    }
+
+    function viewApp(id) {
+      const a = _appCache[id];
+      if (!a) return;
+      const sMap = {
+        cho_duyet: { color:'#f59e0b', label:'⏳ Chờ duyệt' },
+        chap_nhan: { color:'#10b981', label:'✅ Chấp nhận' },
+        tu_choi:   { color:'#ef4444', label:'❌ Từ chối' },
+      };
+      const s = sMap[a.trang_thai] || { color:'#64748b', label: a.trang_thai };
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px';
+      modal.innerHTML = `
+        <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:500px;max-height:85vh;overflow-y:auto">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h3 style="font-size:18px;font-weight:700">📄 Chi tiết ứng tuyển</h3>
+            <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#64748b">✕</button>
+          </div>
+          <div style="padding:16px;background:#f8fafc;border-radius:12px;margin-bottom:16px">
+            <div style="font-weight:700;font-size:15px;margin-bottom:2px">${a.ung_vien}</div>
+            <div style="font-size:12px;color:#94a3b8">${a.email_ung_vien}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:0;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9">
+              <span style="font-size:13px;color:#64748b">Vị trí ứng tuyển</span>
+              <span style="font-size:13px;font-weight:600">${a.cong_viec}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9">
+              <span style="font-size:13px;color:#64748b">Công ty</span>
+              <span style="font-size:13px;font-weight:600">${a.ten_cong_ty}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9">
+              <span style="font-size:13px;color:#64748b">Ngày nộp</span>
+              <span style="font-size:13px;font-weight:600">${formatRelativeTime(a.ngay_ung_tuyen)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0">
+              <span style="font-size:13px;color:#64748b">Trạng thái</span>
+              <span style="font-size:13px;font-weight:600;color:${s.color}">${s.label}</span>
+            </div>
+          </div>
+          ${a.thu_gioi_thieu ? `
+            <div style="margin-bottom:16px">
+              <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px">Thư giới thiệu</div>
+              <div style="background:#f8fafc;border-radius:10px;padding:14px;font-size:13px;color:#1e293b;line-height:1.7;white-space:pre-wrap">${a.thu_gioi_thieu}</div>
+            </div>` : ''}
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${a.trang_thai === 'cho_duyet' ? `
+              <button onclick="this.closest('[style*=fixed]').remove();updateStatus(${a.id},'chap_nhan',this)" style="background:#10b981;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer">✓ Chấp nhận</button>
+              <button onclick="this.closest('[style*=fixed]').remove();updateStatus(${a.id},'tu_choi',this)" style="background:#ef4444;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer">✗ Từ chối</button>
+            ` : ''}
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+    }
+
+    init();
+  </script>
+</body>
+</html>

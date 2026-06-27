@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng Ký — SmartJob</title>
+  <meta name="description" content="Tạo tài khoản Tuyển Dụng miễn phí để nhận gợi ý việc làm thông minh.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/tailwind-config.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body style="min-height:100vh;display:flex;flex-direction:column">
+  <nav class="navbar" id="navbar"></nav>
+
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:100px 20px 40px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:-100px;right:-100px;width:500px;height:500px;background:radial-gradient(circle,rgba(99,102,241,0.1),transparent 70%);border-radius:50%;pointer-events:none"></div>
+
+    <div style="width:100%;max-width:500px;position:relative;z-index:1">
+      <div class="text-center mb-8">
+        <a href="/index.html" class="navbar-brand" style="display:inline-flex;margin-bottom:24px;align-items:center;gap:12px">
+          <img src="/images/logo.png" alt="SmartJob Logo" style="width:48px;height:48px;object-fit:contain;">
+          <span class="text-primary" style="font-size:28px;font-weight:800;letter-spacing:-0.5px">SmartJob</span>
+        </a>
+        <h1 style="font-size:24px;margin-bottom:8px">Tạo tài khoản miễn phí </h1>
+        <p class="text-slate-500 text-[13px]">Bắt đầu hành trình tìm việc thông minh ngay hôm nay</p>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg animate-fadeInUp">
+        <div class="p-6">
+          <form id="registerForm" onsubmit="handleRegister(event)">
+            <div class="mb-5">
+              <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" for="ten">Họ và tên *</label>
+              <div class="relative">
+                <span class="input-icon">👤</span>
+                <input type="text" id="ten" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" placeholder="Nguyễn Văn A" required minlength="2">
+              </div>
+            </div>
+
+            <div class="mb-5">
+              <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" for="email">Địa chỉ email *</label>
+              <div class="relative">
+                <span class="input-icon">✉️</span>
+                <input type="email" id="email" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" placeholder="email@example.com" required>
+              </div>
+            </div>
+
+            <div class="mb-5" style="position:relative">
+              <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" for="password">Mật khẩu *</label>
+              <div class="relative" style="position:relative">
+                <span class="input-icon">🔒</span>
+                <input type="password" id="password" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" placeholder="Tối thiểu 6 ký tự" required minlength="6">
+                <button type="button" class="pass-toggle" onclick="togglePassword()">👁️</button>
+              </div>
+              <!-- Strength indicator -->
+              <div id="strengthBar" style="margin-top:6px;height:4px;border-radius:2px;background:var(--border);overflow:hidden;display:none">
+                <div id="strengthFill" style="height:100%;border-radius:2px;transition:all 0.3s;width:0%"></div>
+              </div>
+              <div id="strengthText" class="text-[13px] mt-8" style="display:none"></div>
+            </div>
+
+            <div class="mb-5">
+              <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Vai trò *</label>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <label for="role_ung_vien" style="cursor:pointer">
+                  <input type="radio" id="role_ung_vien" name="vai_tro" value="ung_vien" checked style="display:none">
+                  <div class="role-card active" id="card_ung_vien" onclick="selectRole('ung_vien')" style="border:2px solid var(--primary);background:rgba(99,102,241,0.1);border-radius:var(--radius-md);padding:16px;text-align:center;transition:all 0.2s">
+                    <div style="font-size:28px;margin-bottom:6px"></div>
+                    <div style="font-size:13px;font-weight:600">Ứng viên</div>
+                    <div class="text-slate-500 text-sm">Tìm việc làm</div>
+                  </div>
+                </label>
+                <label for="role_nha_tuyen_dung" style="cursor:pointer">
+                  <input type="radio" id="role_nha_tuyen_dung" name="vai_tro" value="nha_tuyen_dung" style="display:none">
+                  <div class="role-card" id="card_nha_tuyen_dung" onclick="selectRole('nha_tuyen_dung')" style="border:2px solid var(--border);border-radius:var(--radius-md);padding:16px;text-align:center;transition:all 0.2s">
+                    <div style="font-size:28px;margin-bottom:6px"></div>
+                    <div style="font-size:13px;font-weight:600">Nhà tuyển dụng</div>
+                    <div class="text-slate-500 text-sm">Đăng tuyển việc</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div id="registerError" class="badge bg-red-500/15 text-red-500 border border-red-500/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium mb-8" style="display:none;width:100%;justify-content:flex-start;padding:10px 14px;border-radius:8px;font-size:13px"></div>
+
+            <!-- Terms -->
+            <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:20px">
+              <input type="checkbox" id="terms" required style="margin-top:2px;accent-color:var(--primary)">
+              <label for="terms" class="text-slate-500 text-sm" style="cursor:pointer">
+                Tôi đồng ý với <span style="color:var(--primary-light)">Điều khoản dịch vụ</span> và <span style="color:var(--primary-light)">Chính sách bảo mật</span>
+              </label>
+            </div>
+
+            <button type="submit" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap w-full !flex !px-7 !py-3.5 !text-base" id="registerBtn">
+               Tạo Tài Khoản
+            </button>
+          </form>
+        </div>
+
+        <div class="px-6 py-4 border-t border-slate-200 text-center">
+          <span class="text-slate-500 text-[13px]">Đã có tài khoản? </span>
+          <a href="/login.html" style="color:var(--primary-light);font-weight:600;font-size:14px">Đăng nhập →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+  <script src="/js/api.js"></script>
+  <script>
+    if (isLoggedIn()) window.location.href = '/index.html';
+
+    let selectedRole = 'ung_vien';
+
+    function selectRole(role) {
+      selectedRole = role;
+      document.getElementById('role_ung_vien').checked = role === 'ung_vien';
+      document.getElementById('role_nha_tuyen_dung').checked = role === 'nha_tuyen_dung';
+
+      const cards = ['ung_vien', 'nha_tuyen_dung'];
+      cards.forEach(r => {
+        const card = document.getElementById(`card_${r}`);
+        if (r === role) {
+          card.style.borderColor = 'var(--primary)';
+          card.style.background = 'rgba(99,102,241,0.1)';
+        } else {
+          card.style.borderColor = 'var(--border)';
+          card.style.background = 'transparent';
+        }
+      });
+    }
+
+    // Password strength
+    document.getElementById('password').addEventListener('input', function() {
+      const val = this.value;
+      const bar = document.getElementById('strengthBar');
+      const fill = document.getElementById('strengthFill');
+      const text = document.getElementById('strengthText');
+
+      if (!val) { bar.style.display = 'none'; text.style.display = 'none'; return; }
+      bar.style.display = 'block'; text.style.display = 'block';
+
+      let strength = 0;
+      if (val.length >= 6) strength++;
+      if (val.length >= 10) strength++;
+      if (/[A-Z]/.test(val)) strength++;
+      if (/[0-9]/.test(val)) strength++;
+      if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+      const levels = [
+        { pct: '20%', color: '#ef4444', label: '😰 Rất yếu' },
+        { pct: '40%', color: '#f97316', label: '😟 Yếu' },
+        { pct: '60%', color: '#f59e0b', label: '😐 Trung bình' },
+        { pct: '80%', color: '#10b981', label: ' Mạnh' },
+        { pct: '100%', color: '#6366f1', label: '💪 Rất mạnh' },
+      ];
+      const l = levels[Math.min(strength - 1, 4)] || levels[0];
+      fill.style.width = l.pct;
+      fill.style.background = l.color;
+      text.textContent = l.label;
+      text.style.color = l.color;
+    });
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const btn = document.getElementById('registerBtn');
+      const errEl = document.getElementById('registerError');
+      errEl.style.display = 'none';
+
+      const ten = document.getElementById('ten').value;
+      const email = document.getElementById('email').value;
+      const mat_khau = document.getElementById('password').value;
+
+      if (mat_khau.length < 6) {
+        errEl.textContent = 'Mật khẩu phải có ít nhất 6 ký tự.';
+        errEl.style.display = 'flex'; return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading-spinner" style="width:18px;height:18px;border-width:2px"></span> Đang tạo tài khoản...';
+
+      try {
+        const data = await API.auth.register({ ten, email, mat_khau, vai_tro: selectedRole });
+        saveAuth(data.token, data.user);
+        showToast('Tạo tài khoản thành công! ', 'success');
+        setTimeout(() => window.location.href = data.user.vai_tro === 'nha_tuyen_dung' ? '/recruiter-jobs.html' : '/profile.html', 1000);
+      } catch (err) {
+        errEl.textContent = err.message || 'Đăng ký thất bại.';
+        errEl.style.display = 'flex';
+        btn.disabled = false;
+        btn.innerHTML = ' Tạo Tài Khoản';
+      }
+    }
+
+    function togglePassword() {
+      const el = document.getElementById('password');
+      el.type = el.type === 'password' ? 'text' : 'password';
+    }
+  </script>
+</body>
+</html>

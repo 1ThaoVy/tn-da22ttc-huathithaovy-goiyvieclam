@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#f1f5f9;font-family:sans-serif;color:#1e293b}
+.sidebar{position:sticky;top:0;width:220px;height:100vh;background:linear-gradient(180deg,#1e1b4b,#312e81);display:flex;flex-direction:column;z-index:200}
+.sb-brand{padding:20px 18px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:10px}
+.sb-brand img{width:28px;height:28px;object-fit:contain}
+.sb-brand span{font-size:17px;font-weight:800;color:#fff}
+.sb-nav{padding:10px;flex:1;overflow-y:auto}
+.sb-sec{font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1px;padding:12px 8px 4px}
+.sb-a{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:8px;color:rgba(255,255,255,0.6);font-size:13px;text-decoration:none;margin-bottom:2px;transition:.15s}
+.sb-a:hover{background:rgba(255,255,255,0.1);color:#fff}
+.sb-a.on{background:rgba(255,255,255,0.18);color:#fff;font-weight:700}
+.sb-foot{padding:12px 10px;border-top:1px solid rgba(255,255,255,0.1)}
+.sb-user{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.sb-av{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-out{width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.13);border-radius:7px;padding:8px;font-size:13px;color:rgba(255,255,255,0.65);cursor:pointer}
+.sb-out:hover{background:rgba(255,255,255,0.14);color:#fff}
+.main{padding:26px 28px;min-height:100vh;overflow-y:auto}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.topbar h1{font-size:21px;font-weight:800}
+.topbar p{font-size:13px;color:#64748b;margin-top:2px}
+.btn-rf{background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;color:#6366f1;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.sc{background:#fff;border-radius:12px;padding:18px 20px;border:1px solid #e2e8f0;transition:.2s}
+.sc:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,0.07)}
+.sc-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.sc-lbl{font-size:12px;color:#64748b;margin-bottom:4px}
+.sc-val{font-size:30px;font-weight:800;line-height:1}
+.sc-ico{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.sc-sub{font-size:11px;font-weight:600;margin-top:4px}
+.cc{background:#fff;border-radius:12px;padding:20px;border:1px solid #e2e8f0}
+.cc h3{font-size:14px;font-weight:700;margin-bottom:3px}
+.cc p{font-size:12px;color:#94a3b8;margin-bottom:14px}
+.r2{display:grid;grid-template-columns:3fr 2fr;gap:16px;margin-bottom:16px}
+.r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.toast-container{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{display:flex;align-items:center;gap:8px;padding:11px 16px;border-radius:9px;font-size:13px;font-weight:500;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,0.15)}
+.toast.success{background:#10b981}.toast.error{background:#ef4444}.toast.warning{background:#f59e0b}.toast.info{background:#6366f1}
+</style>
+</head>
+<body>
+<div style="display:grid;grid-template-columns:220px 1fr;min-height:100vh">
+<aside class="sidebar">
+  <div class="sb-brand">
+    <img src="/images/logo.png" alt="">
+    <span>SmartJob</span>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Tổng quan</div>
+    <a href="/admin/dashboard.html" class="sb-a on">📊 Dashboard</a>
+    <div class="sb-sec">Quản lý</div>
+    <a href="/admin/users.html" class="sb-a">👥 Người dùng</a>
+    <a href="/admin/jobs.html" class="sb-a">💼 Công việc</a>
+    <a href="/admin/applications.html" class="sb-a">📄 Ứng tuyển</a>
+    <a href="/admin/companies.html" class="sb-a">🏢 Công ty</a>
+    <div class="sb-sec">Hệ thống</div>
+    <a href="/index.html" class="sb-a">🌐 Trang chủ</a>
+  </nav>
+  <div class="sb-foot">
+    <div class="sb-user">
+      <div class="sb-av" id="sbAv">A</div>
+      <div>
+        <div id="sbName" style="font-size:13px;font-weight:600;color:#fff">Admin</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.4)">Quản trị viên</div>
+      </div>
+    </div>
+    <button class="sb-out" id="btnOut">Đăng xuất</button>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>Dashboard</h1>
+      <p>Tổng quan hệ thống SmartJob</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="lastUpd" style="font-size:12px;color:#94a3b8"></span>
+      <button class="btn-rf" id="btnRf">Làm mới</button>
+    </div>
+  </div>
+
+  <div class="stats" id="statCards">
+    <div class="sc"><div style="height:76px;background:#f1f5f9;border-radius:8px"></div></div>
+    <div class="sc"><div style="height:76px;background:#f1f5f9;border-radius:8px"></div></div>
+    <div class="sc"><div style="height:76px;background:#f1f5f9;border-radius:8px"></div></div>
+    <div class="sc"><div style="height:76px;background:#f1f5f9;border-radius:8px"></div></div>
+  </div>
+
+  <div class="r2">
+    <div class="cc"><h3>Đăng ký &amp; Ứng tuyển</h3><p>7 ngày gần nhất</p><canvas id="cCombo" height="110"></canvas></div>
+    <div class="cc"><h3>Trạng thái ứng tuyển</h3><p>Tỉ lệ xử lý hồ sơ</p><canvas id="cStatus" height="110"></canvas></div>
+  </div>
+  <div class="r3">
+    <div class="cc"><h3>Vai trò người dùng</h3><p>Phân bổ theo vai trò</p><canvas id="cRoles" height="180"></canvas></div>
+    <div class="cc"><h3>Loại hình công việc</h3><p>Phân bổ theo loại hình</p><canvas id="cTypes" height="180"></canvas></div>
+    <div class="cc"><h3>Top công ty</h3><p>Nhiều tin tuyển dụng nhất</p><canvas id="cCo" height="180"></canvas></div>
+  </div>
+</main>
+</div>
+
+<div id="toast-container" class="toast-container"></div>
+<script src="/js/api.js"></script>
+<script>
+var tok = localStorage.getItem('token');
+var usr = null;
+try { usr = JSON.parse(localStorage.getItem('user')); } catch(e){}
+if (!tok || !usr || usr.vai_tro !== 'admin') { window.location.replace('/login.html'); }
+
+document.getElementById('sbName').textContent = usr ? usr.ten : 'Admin';
+document.getElementById('sbAv').textContent = usr && usr.ten ? usr.ten.split(' ').pop()[0].toUpperCase() : 'A';
+document.getElementById('btnOut').onclick = function(){ localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.href='/login.html'; };
+document.getElementById('btnRf').onclick = function(){ loadAll(); };
+
+var C = {p:'#6366f1',s:'#10b981',w:'#f59e0b',d:'#ef4444',c:'#06b6d4',v:'#8b5cf6'};
+Chart.register(ChartDataLabels);
+var charts = {};
+
+function killChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+
+function fillDays(data, n){
+  n = n || 7;
+  var r = [];
+  for(var i=n-1; i>=0; i--){
+    var d = new Date(); d.setDate(d.getDate()-i);
+    var k = d.toISOString().split('T')[0];
+    var f = null;
+    for(var j=0;j<data.length;j++){
+      // normalize: MySQL có thể trả về Date object hoặc string
+      var ngay = data[j].ngay;
+      if(ngay instanceof Date) ngay = ngay.toISOString().split('T')[0];
+      else if(typeof ngay === 'string') ngay = ngay.split('T')[0];
+      if(ngay === k){ f=data[j]; break; }
+    }
+    r.push({ l: (d.getDate())+'/'+(d.getMonth()+1), v: f ? parseInt(f.so_luong) : 0 });
+  }
+  return r;
+}
+
+function showMsg(msg, type){
+  var c = document.getElementById('toast-container');
+  var t = document.createElement('div');
+  t.className = 'toast ' + (type||'info');
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3500);
+}
+
+function loadStats(){
+  return fetch('/api/admin/stats', { headers: { 'Authorization': 'Bearer '+tok } })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      var s = res.stats;
+      var cards = [
+        {ic:'👥',lb:'Ứng viên',val:s.tongUngVien,col:C.p,bg:'rgba(99,102,241,0.1)',sub:'Tổng số đăng ký'},
+        {ic:'💼',lb:'Việc đang tuyển',val:s.tongCongViec,col:C.s,bg:'rgba(16,185,129,0.1)',sub:'Đang hoạt động'},
+        {ic:'📄',lb:'Tổng ứng tuyển',val:s.tongUngTuyen,col:C.c,bg:'rgba(6,182,212,0.1)',sub:'Tất cả thời gian'},
+        {ic:'⏳',lb:'Chờ xử lý',val:s.choXuLy,col:C.w,bg:'rgba(245,158,11,0.1)',sub:'Cần duyệt ngay'},
+      ];
+      document.getElementById('statCards').innerHTML = cards.map(function(x){
+        return '<div class="sc"><div class="sc-row"><div><div class="sc-lbl">'+x.lb+'</div><div class="sc-val">'+x.val+'</div></div><div class="sc-ico" style="background:'+x.bg+'">'+x.ic+'</div></div><div class="sc-sub" style="color:'+x.col+'">'+x.sub+'</div></div>';
+      }).join('');
+    });
+}
+
+function loadCharts(){
+  return fetch('/api/admin/stats/charts', { headers: { 'Authorization': 'Bearer '+tok } })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      var d = res.charts;
+      var ud = fillDays(d.usersByDay), ad = fillDays(d.applyByDay);
+
+      killChart('cCombo');
+      charts.cCombo = new Chart(document.getElementById('cCombo'),{
+        type:'bar',
+        data:{labels:ud.map(function(x){return x.l;}),datasets:[
+          {label:'Đăng ký mới',data:ud.map(function(x){return x.v;}),backgroundColor:'rgba(99,102,241,0.75)',borderRadius:5,borderWidth:0},
+          {label:'Ứng tuyển',data:ad.map(function(x){return x.v;}),backgroundColor:'rgba(6,182,212,0.75)',borderRadius:5,borderWidth:0}
+        ]},
+        options:{responsive:true,plugins:{legend:{position:'top'},datalabels:{anchor:'end',align:'top',font:{size:11,weight:'bold'},color:'#1e293b',formatter:function(v){return v>0?v:'';}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
+      });
+
+      var sl={cho_duyet:'Chờ duyệt',chap_nhan:'Chấp nhận',tu_choi:'Từ chối'};
+      killChart('cStatus');
+      charts.cStatus = new Chart(document.getElementById('cStatus'),{
+        type:'doughnut',
+        data:{labels:d.applyStatusStats.map(function(r){return sl[r.trang_thai]||r.trang_thai;}),
+          datasets:[{data:d.applyStatusStats.map(function(r){return parseInt(r.so_luong);}),backgroundColor:[C.w,C.s,C.d],borderWidth:0}]},
+        options:{responsive:true,cutout:'60%',plugins:{legend:{position:'bottom'},datalabels:{color:'#fff',font:{size:13,weight:'bold'},formatter:function(v,ctx){var total=ctx.dataset.data.reduce(function(a,b){return a+b;},0);var pct=total>0?Math.round(v/total*100):0;return v+'\n('+pct+'%)';}}}}
+      });
+
+      var rl={ung_vien:'Ứng viên',nha_tuyen_dung:'Nhà tuyển dụng',admin:'Admin'};
+      killChart('cRoles');
+      charts.cRoles = new Chart(document.getElementById('cRoles'),{
+        type:'doughnut',
+        data:{labels:d.roleStats.map(function(r){return rl[r.vai_tro]||r.vai_tro;}),
+          datasets:[{data:d.roleStats.map(function(r){return parseInt(r.so_luong);}),backgroundColor:[C.p,C.s,C.w],borderWidth:0}]},
+        options:{responsive:true,cutout:'60%',plugins:{legend:{position:'bottom'},datalabels:{color:'#fff',font:{size:13,weight:'bold'},formatter:function(v,ctx){var total=ctx.dataset.data.reduce(function(a,b){return a+b;},0);var pct=total>0?Math.round(v/total*100):0;return v+'\n('+pct+'%)';}}}}
+      });
+
+      var tl={toan_thoi_gian:'Toàn TG',ban_thoi_gian:'Bán TG',tu_do:'Tự do',thuc_tap:'Thực tập'};
+      killChart('cTypes');
+      charts.cTypes = new Chart(document.getElementById('cTypes'),{
+        type:'pie',
+        data:{labels:d.jobTypeStats.map(function(r){return tl[r.loai_hinh]||r.loai_hinh;}),
+          datasets:[{data:d.jobTypeStats.map(function(r){return parseInt(r.so_luong);}),backgroundColor:[C.p,C.c,C.v,C.s],borderWidth:0}]},
+        options:{responsive:true,plugins:{legend:{position:'bottom'},datalabels:{color:'#fff',font:{size:13,weight:'bold'},formatter:function(v,ctx){var total=ctx.dataset.data.reduce(function(a,b){return a+b;},0);var pct=total>0?Math.round(v/total*100):0;return v+'\n('+pct+'%)';}}}}
+      });
+
+      killChart('cCo');
+      charts.cCo = new Chart(document.getElementById('cCo'),{
+        type:'bar',
+        data:{labels:d.topCompanies.map(function(r){return r.ten_cong_ty.length>13?r.ten_cong_ty.slice(0,13)+'...':r.ten_cong_ty;}),
+          datasets:[{data:d.topCompanies.map(function(r){return parseInt(r.so_tin);}),
+            backgroundColor:[C.p,C.c,C.v,C.s,C.w].map(function(x){return x+'cc';}),borderRadius:5,borderWidth:0}]},
+        options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false},datalabels:{anchor:'end',align:'right',font:{size:12,weight:'bold'},color:'#1e293b',formatter:function(v){return v+' tin';}}},scales:{x:{beginAtZero:true,ticks:{stepSize:1}}}}
+      });
+    });
+}
+
+function loadAll(){
+  Promise.all([loadStats(), loadCharts()])
+    .then(function(){
+      document.getElementById('lastUpd').textContent = 'Cập nhật: ' + new Date().toLocaleTimeString('vi-VN');
+    })
+    .catch(function(e){
+      showMsg('Lỗi tải dữ liệu: ' + e.message, 'error');
+    });
+}
+
+loadAll();
+setInterval(loadAll, 60000);
+</script>
+</body>
+</html>

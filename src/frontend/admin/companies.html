@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý Công ty — Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/tailwind-config.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body{background:#f8fafc}
+    .sidebar{background:linear-gradient(180deg,#1e1b4b 0%,#312e81 100%);padding:0;position:sticky;top:0;height:100vh;width:240px;display:flex;flex-direction:column;z-index:100}
+    .sidebar-brand{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:10px}
+    .sidebar-brand span{font-size:20px;font-weight:800;color:white}
+    .sidebar-nav{padding:16px 12px;flex:1}
+    .nav-section{font-size:10px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;padding:12px 8px 6px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:rgba(255,255,255,0.65);font-size:13px;font-weight:500;transition:all 0.15s;text-decoration:none;margin-bottom:2px}
+    .nav-item:hover{background:rgba(255,255,255,0.1);color:white}
+    .nav-item.active{background:rgba(255,255,255,0.15);color:white;font-weight:600}
+    .nav-item .icon{font-size:16px;width:20px;text-align:center}
+    .sidebar-footer{padding:16px 12px;border-top:1px solid rgba(255,255,255,0.1)}
+    .main-content{padding:28px 32px;overflow-y:auto}
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px}
+    .modal-box{background:white;border-radius:16px;padding:28px;width:100%;max-width:500px;margin:auto}
+    .field-label{display:block;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+    .field-input{width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none}
+    .field-input:focus{border-color:#6366f1}
+  </style>
+</head>
+<body>
+  <div style="display:grid;grid-template-columns:240px 1fr;min-height:100vh">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="/images/logo.png" alt="logo" style="width:32px;height:32px;object-fit:contain">
+        <span>SmartJob</span>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">Tổng quan</div>
+        <a href="/admin/dashboard.html" class="nav-item"><span class="icon">📊</span> Dashboard</a>
+        <div class="nav-section">Quản lý</div>
+        <a href="/admin/users.html" class="nav-item"><span class="icon">👥</span> Người dùng</a>
+        <a href="/admin/jobs.html" class="nav-item"><span class="icon">💼</span> Công việc</a>
+        <a href="/admin/applications.html" class="nav-item"><span class="icon">📄</span> Ứng tuyển</a>
+        <a href="/admin/companies.html" class="nav-item active"><span class="icon">🏢</span> Công ty</a>
+        <div class="nav-section">Hệ thống</div>
+        <a href="/index.html" class="nav-item"><span class="icon">🌐</span> Trang chủ</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">
+          <div id="sbAv" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">A</div>
+          <div>
+            <div id="sbName" style="font-size:13px;font-weight:600;color:#fff">Admin</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4)">Quản trị viên</div>
+          </div>
+        </div>
+        <button onclick="handleLogout()" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer">🚪 Đăng xuất</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h1 style="font-size:22px;font-weight:800;margin-bottom:2px">🏢 Quản lý Công ty</h1>
+          <p style="font-size:13px;color:#64748b">Danh sách tất cả công ty trong hệ thống</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="text" id="searchInput" placeholder="🔍 Tìm công ty..." style="padding:9px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;min-width:220px" oninput="filterCompanies()">
+          <button onclick="openModal()" style="background:#6366f1;color:white;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer">➕ Thêm công ty</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px" id="companiesGrid">
+        <div style="background:white;border-radius:16px;border:1px solid #e2e8f0;padding:24px">
+          <div style="height:60px;background:#f1f5f9;border-radius:8px"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal thêm/sửa công ty -->
+  <div id="modal" class="modal-overlay">
+    <div class="modal-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <h3 id="modalTitle" style="font-size:18px;font-weight:700">➕ Thêm Công Ty</h3>
+        <button onclick="closeModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#64748b">✕</button>
+      </div>
+      <form onsubmit="submitCompany(event)">
+        <input type="hidden" id="c_id">
+        <div style="margin-bottom:14px">
+          <label class="field-label">Tên công ty *</label>
+          <input type="text" id="c_ten" class="field-input" required>
+        </div>
+        <div style="margin-bottom:14px">
+          <label class="field-label">Mô tả</label>
+          <textarea id="c_mota" rows="3" class="field-input" style="resize:vertical"></textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+          <div>
+            <label class="field-label">Website</label>
+            <input type="text" id="c_website" class="field-input" placeholder="company.vn">
+          </div>
+          <div>
+            <label class="field-label">Quy mô</label>
+            <select id="c_quymo" class="field-input">
+              <option value="">-- Chọn --</option>
+              <option>1-10 nhân viên</option>
+              <option>10-50 nhân viên</option>
+              <option>50-200 nhân viên</option>
+              <option>200-500 nhân viên</option>
+              <option>Trên 500 nhân viên</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:20px">
+          <label class="field-label">Địa chỉ</label>
+          <input type="text" id="c_diachi" class="field-input">
+        </div>
+        <div style="display:flex;gap:10px">
+          <button type="button" onclick="closeModal()" style="flex:1;padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;background:white;color:#64748b">Hủy</button>
+          <button type="submit" id="submitBtn" style="flex:2;padding:10px;background:#6366f1;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;color:white">💾 Lưu</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+  <script src="/js/api.js"></script>
+  <script>
+    if (!requireAuth()) {}
+    const user = getUser();
+    if (!user || user.vai_tro !== 'admin') window.location.href = '/index.html';
+    if (user) {
+      document.getElementById('sbName').textContent = user.ten || 'Admin';
+      document.getElementById('sbAv').textContent = user.ten ? user.ten.split(' ').pop()[0].toUpperCase() : 'A';
+    }
+
+    let allCompanies = [];
+    let _companyCache = {};
+
+    async function loadCompanies() {
+      try {
+        const data = await API.admin.getCompanies();
+        allCompanies = data.companies || [];
+        // Cache để onclick gọi theo id
+        allCompanies.forEach(c => { _companyCache[c.id] = c; });
+        filterCompanies();
+      } catch(e) { showToast('Không tải được dữ liệu.', 'error'); }
+    }
+
+    function filterCompanies() {
+      const q = (document.getElementById('searchInput').value || '').toLowerCase();
+      const filtered = q ? allCompanies.filter(c => c.ten_cong_ty.toLowerCase().includes(q) || (c.dia_chi||'').toLowerCase().includes(q)) : allCompanies;
+      const grid = document.getElementById('companiesGrid');
+      if (!filtered.length) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:#94a3b8">Không tìm thấy công ty nào</div>';
+        return;
+      }
+      grid.innerHTML = filtered.map(c => `
+          <div style="background:white;border-radius:16px;border:1px solid #e2e8f0;padding:22px;transition:all 0.2s" onmouseover="this.style.boxShadow='0 8px 24px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow=''">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:44px;height:44px;border-radius:10px;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#6366f1;flex-shrink:0">${getInitials(c.ten_cong_ty)}</div>
+                <div>
+                  <div style="font-size:15px;font-weight:700">${c.ten_cong_ty}</div>
+                  ${c.quy_mo ? `<div style="font-size:12px;color:#94a3b8">${c.quy_mo}</div>` : ''}
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;flex-shrink:0">
+                <button onclick="viewCompany(${c.id})" style="background:rgba(6,182,212,0.1);color:#06b6d4;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600">👁️</button>
+                <button onclick="openEdit(${c.id})" style="background:rgba(99,102,241,0.1);color:#6366f1;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600">✏️</button>
+                <button onclick="deleteCompany(${c.id})" style="background:rgba(239,68,68,0.1);color:#ef4444;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600">🗑️</button>
+              </div>
+            </div>
+            ${c.mo_ta ? `<p style="font-size:13px;color:#64748b;line-height:1.6;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${c.mo_ta}</p>` : ''}
+            <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:#94a3b8;margin-bottom:8px">
+              ${c.dia_chi ? `<span>📍 ${c.dia_chi}</span>` : ''}
+              ${c.website ? `<a href="https://${c.website}" target="_blank" style="color:#6366f1;text-decoration:none">🔗 ${c.website}</a>` : ''}
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid #f1f5f9">
+              ${c.ntd_ten ? `<span style="font-size:12px;color:#10b981;font-weight:600">👤 ${c.ntd_ten}</span>` : '<span></span>'}
+              <a href="/admin/jobs.html?company=${encodeURIComponent(c.ten_cong_ty)}" style="font-size:12px;color:#6366f1;text-decoration:none;font-weight:600">💼 Xem tin →</a>
+            </div>
+          </div>`).join('');
+    }
+
+    function openModal() {
+      document.getElementById('c_id').value = '';
+      document.getElementById('c_ten').value = '';
+      document.getElementById('c_mota').value = '';
+      document.getElementById('c_website').value = '';
+      document.getElementById('c_quymo').value = '';
+      document.getElementById('c_diachi').value = '';
+      document.getElementById('modalTitle').textContent = '➕ Thêm Công Ty';
+      document.getElementById('submitBtn').textContent = '➕ Thêm công ty';
+      document.getElementById('modal').style.display = 'flex';
+    }
+
+    function openEdit(id) {
+      const c = _companyCache[id];
+      if (!c) return;
+      document.getElementById('c_id').value = c.id;
+      document.getElementById('c_ten').value = c.ten_cong_ty;
+      document.getElementById('c_mota').value = c.mo_ta || '';
+      document.getElementById('c_website').value = c.website || '';
+      document.getElementById('c_quymo').value = c.quy_mo || '';
+      document.getElementById('c_diachi').value = c.dia_chi || '';
+      document.getElementById('modalTitle').textContent = '✏️ Sửa Công Ty';
+      document.getElementById('submitBtn').textContent = '💾 Lưu thay đổi';
+      document.getElementById('modal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+    async function submitCompany(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const id = document.getElementById('c_id').value;
+      btn.disabled = true; btn.textContent = 'Đang lưu...';
+      const payload = {
+        ten_cong_ty: document.getElementById('c_ten').value,
+        mo_ta: document.getElementById('c_mota').value,
+        website: document.getElementById('c_website').value,
+        quy_mo: document.getElementById('c_quymo').value,
+        dia_chi: document.getElementById('c_diachi').value,
+      };
+      try {
+        if (id) {
+          await API.admin.updateCompany(id, payload);
+          showToast('Cập nhật công ty thành công!', 'success');
+        } else {
+          await API.admin.createCompany(payload);
+          showToast('Thêm công ty thành công!', 'success');
+        }
+        closeModal();
+        loadCompanies();
+      } catch(e) { showToast(e.message || 'Thất bại.', 'error'); }
+      btn.disabled = false;
+      btn.textContent = id ? '💾 Lưu thay đổi' : '➕ Thêm công ty';
+    }
+
+    async function deleteCompany(id) {
+      if (!confirm('Xóa công ty này? Hành động không thể hoàn tác.')) return;
+      try {
+        await API.admin.deleteCompany(id);
+        showToast('Đã xóa công ty.', 'success');
+        loadCompanies();
+      } catch(e) { showToast(e.message || 'Xóa thất bại.', 'error'); }
+    }
+
+    function viewCompany(id) {
+      const c = _companyCache[id];
+      if (!c) return;
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px';
+      modal.innerHTML = `
+        <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:460px;max-height:85vh;overflow-y:auto">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h3 style="font-size:18px;font-weight:700">🏢 Chi tiết công ty</h3>
+            <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#64748b">✕</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:16px;background:#f8fafc;border-radius:12px">
+            <div style="width:52px;height:52px;border-radius:12px;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#6366f1;flex-shrink:0">${getInitials(c.ten_cong_ty)}</div>
+            <div>
+              <div style="font-size:16px;font-weight:700">${c.ten_cong_ty}</div>
+              ${c.quy_mo ? `<div style="font-size:12px;color:#94a3b8">${c.quy_mo}</div>` : ''}
+            </div>
+          </div>
+          ${c.mo_ta ? `<div style="padding:12px;background:#f8fafc;border-radius:10px;font-size:13px;color:#1e293b;line-height:1.7;margin-bottom:16px">${c.mo_ta}</div>` : ''}
+          <div style="display:flex;flex-direction:column;gap:0">
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9">
+              <span style="font-size:13px;color:#64748b">Địa chỉ</span>
+              <span style="font-size:13px;font-weight:600">${c.dia_chi || '—'}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9">
+              <span style="font-size:13px;color:#64748b">Website</span>
+              ${c.website ? `<a href="https://${c.website}" target="_blank" style="font-size:13px;font-weight:600;color:#6366f1">${c.website}</a>` : '<span style="font-size:13px;font-weight:600">—</span>'}
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0">
+              <span style="font-size:13px;color:#64748b">Quy mô</span>
+              <span style="font-size:13px;font-weight:600">${c.quy_mo || '—'}</span>
+            </div>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+    }
+
+    loadCompanies();
+  </script>
+</body>
+</html>

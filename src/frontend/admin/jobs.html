@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý Công việc — Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/tailwind-config.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body{background:#f8fafc}
+    .sidebar{background:linear-gradient(180deg,#1e1b4b 0%,#312e81 100%);padding:0;position:sticky;top:0;height:100vh;width:240px;display:flex;flex-direction:column;z-index:100}
+    .sidebar-brand{padding:24px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:10px}
+    .sidebar-brand span{font-size:20px;font-weight:800;color:white}
+    .sidebar-nav{padding:16px 12px;flex:1}
+    .nav-section{font-size:10px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;padding:12px 8px 6px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:rgba(255,255,255,0.65);font-size:13px;font-weight:500;transition:all 0.15s;text-decoration:none;margin-bottom:2px}
+    .nav-item:hover{background:rgba(255,255,255,0.1);color:white}
+    .nav-item.active{background:rgba(255,255,255,0.15);color:white;font-weight:600}
+    .nav-item .icon{font-size:16px;width:20px;text-align:center}
+    .sidebar-footer{padding:16px 12px;border-top:1px solid rgba(255,255,255,0.1)}
+    .main-content{padding:28px 32px;overflow-y:auto}
+    table{width:100%;border-collapse:collapse}
+    th{background:#f1f5f9;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#64748b;padding:10px 14px;text-align:left}
+    td{padding:12px 14px;border-bottom:1px solid #f1f5f9;font-size:13px;vertical-align:middle}
+    tr:hover td{background:#fafafa}
+    .btn-action{border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600}
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px}
+    .modal-box{background:white;border-radius:16px;padding:28px;width:100%;max-width:520px;margin:auto;max-height:90vh;overflow-y:auto}
+    .field-label{display:block;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+    .field-input{width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none}
+    .field-input:focus{border-color:#6366f1}
+  </style>
+</head>
+<body>
+  <div style="display:grid;grid-template-columns:240px 1fr;min-height:100vh">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="/images/logo.png" alt="logo" style="width:32px;height:32px;object-fit:contain">
+        <span>SmartJob</span>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">Tổng quan</div>
+        <a href="/admin/dashboard.html" class="nav-item"><span class="icon">📊</span> Dashboard</a>
+        <div class="nav-section">Quản lý</div>
+        <a href="/admin/users.html" class="nav-item"><span class="icon">👥</span> Người dùng</a>
+        <a href="/admin/jobs.html" class="nav-item active"><span class="icon">💼</span> Công việc</a>
+        <a href="/admin/applications.html" class="nav-item"><span class="icon">📄</span> Ứng tuyển</a>
+        <a href="/admin/companies.html" class="nav-item"><span class="icon">🏢</span> Công ty</a>
+        <div class="nav-section">Hệ thống</div>
+        <a href="/index.html" class="nav-item"><span class="icon">🌐</span> Trang chủ</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">
+          <div id="sbAv" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">A</div>
+          <div>
+            <div id="sbName" style="font-size:13px;font-weight:600;color:#fff">Admin</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4)">Quản trị viên</div>
+          </div>
+        </div>
+        <button onclick="handleLogout()" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer">🚪 Đăng xuất</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h1 style="font-size:22px;font-weight:800;margin-bottom:2px">💼 Quản lý Công việc</h1>
+          <p style="font-size:13px;color:#64748b">Tất cả tin tuyển dụng trong hệ thống</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="text" id="searchInput" placeholder="🔍 Tìm tiêu đề, công ty..." style="padding:9px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;min-width:220px" oninput="filterJobs()">
+          <select id="filterStatus" style="padding:9px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none" onchange="filterJobs()">
+            <option value="">Tất cả trạng thái</option>
+            <option value="dang_tuyen">🟢 Đang tuyển</option>
+            <option value="da_dong">🔴 Đã đóng</option>
+          </select>
+          <select id="filterType" style="padding:9px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none" onchange="filterJobs()">
+            <option value="">Tất cả loại hình</option>
+            <option value="toan_thoi_gian">Toàn thời gian</option>
+            <option value="ban_thoi_gian">Bán thời gian</option>
+            <option value="tu_do">Tự do</option>
+            <option value="thuc_tap">Thực tập</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="background:white;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden">
+        <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9">
+          <span id="resultLabel" style="font-size:13px;color:#64748b"></span>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Tiêu đề</th>
+                <th>Công ty</th>
+                <th>Loại hình</th>
+                <th>Mức lương</th>
+                <th>Ứng tuyển</th>
+                <th>Trạng thái</th>
+                <th>Ngày đăng</th>
+                <th style="min-width:160px">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="jobsTable">
+              <tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8">Đang tải...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+  <script src="/js/api.js"></script>
+  <script>
+    if (!requireAuth()) {}
+    const user = getUser();
+    if (!user || user.vai_tro !== 'admin') window.location.href = '/index.html';
+    if (user) {
+      document.getElementById('sbName').textContent = user.ten || 'Admin';
+      document.getElementById('sbAv').textContent = user.ten ? user.ten.split(' ').pop()[0].toUpperCase() : 'A';
+    }
+
+    let allJobs = [];
+    let _jobCache = {};
+
+    async function loadJobs() {
+      try {
+        const data = await API.admin.getJobs();
+        allJobs = data.jobs || [];
+        // Cache toàn bộ jobs theo id
+        allJobs.forEach(j => { _jobCache[j.id] = j; });
+        // Áp dụng filter từ URL nếu có
+        const urlParams = new URLSearchParams(window.location.search);
+        const companyFilter = urlParams.get('company');
+        if (companyFilter) {
+          document.getElementById('searchInput').value = companyFilter;
+        }
+        filterJobs();
+      } catch(e) { showToast('Không tải được dữ liệu.', 'error'); }
+    }
+
+    function filterJobs() {
+      const q = (document.getElementById('searchInput').value || '').toLowerCase();
+      const status = document.getElementById('filterStatus').value;
+      const type = document.getElementById('filterType').value;
+      let jobs = allJobs.filter(j =>
+        (!q || j.tieu_de.toLowerCase().includes(q) || (j.ten_cong_ty||'').toLowerCase().includes(q)) &&
+        (!status || j.trang_thai === status) &&
+        (!type || j.loai_hinh === type)
+      );
+      document.getElementById('resultLabel').textContent = `${jobs.length} công việc`;
+      document.getElementById('jobsTable').innerHTML = jobs.length ? jobs.map((j, i) => `
+          <tr>
+            <td style="color:#94a3b8;font-size:12px">${i+1}</td>
+            <td>
+              <a href="/job-detail.html?id=${j.id}" target="_blank" style="font-weight:600;color:#1e293b;text-decoration:none" onmouseover="this.style.color='#6366f1'" onmouseout="this.style.color='#1e293b'">${j.tieu_de}</a>
+            </td>
+            <td style="color:#64748b">${j.ten_cong_ty}</td>
+            <td><span style="background:rgba(99,102,241,0.1);color:#6366f1;border-radius:20px;padding:3px 10px;font-size:12px">${getJobTypeLabel(j.loai_hinh)}</span></td>
+            <td style="color:#64748b;font-size:12px">${formatSalary(j.muc_luong_min, j.muc_luong_max)}</td>
+            <td>
+              <a href="/admin/applications.html?job=${j.id}" style="background:rgba(6,182,212,0.1);color:#06b6d4;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;text-decoration:none">${j.so_ung_tuyen} hồ sơ</a>
+            </td>
+            <td><span style="background:${j.trang_thai==='dang_tuyen'?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)'};color:${j.trang_thai==='dang_tuyen'?'#10b981':'#ef4444'};border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600">${j.trang_thai==='dang_tuyen'?'🟢 Đang tuyển':'🔴 Đã đóng'}</span></td>
+            <td style="color:#94a3b8;font-size:12px">${formatDate(j.ngay_tao)}</td>
+            <td>
+              <div style="display:flex;gap:6px">
+                <button class="btn-action" style="background:rgba(6,182,212,0.1);color:#06b6d4" onclick="viewJob(${j.id})">👁️ Xem</button>
+                <button class="btn-action" style="background:rgba(239,68,68,0.1);color:#ef4444" onclick="deleteJob(${j.id})">🗑️ Xóa</button>
+              </div>
+            </td>
+          </tr>`).join('') : '<tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8">Không có dữ liệu</td></tr>';
+    }
+
+    function viewJob(id) {
+      const j = _jobCache[+id];
+      if (!j) return;
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px';
+      modal.innerHTML = `
+        <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:500px;max-height:85vh;overflow-y:auto">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h3 style="font-size:18px;font-weight:700">💼 Chi tiết công việc</h3>
+            <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#64748b">✕</button>
+          </div>
+          <div style="padding:16px;background:#f8fafc;border-radius:12px;margin-bottom:16px">
+            <div style="font-size:16px;font-weight:700;margin-bottom:4px">${j.tieu_de}</div>
+            <div style="font-size:13px;color:#64748b">${j.ten_cong_ty}</div>
+          </div>
+          <div style="display:flex;flex-direction:column">
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9">
+              <span style="font-size:13px;color:#64748b">Loại hình</span>
+              <span style="font-size:13px;font-weight:600">${getJobTypeLabel(j.loai_hinh)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9">
+              <span style="font-size:13px;color:#64748b">Mức lương</span>
+              <span style="font-size:13px;font-weight:600">${formatSalary(j.muc_luong_min, j.muc_luong_max)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9">
+              <span style="font-size:13px;color:#64748b">Địa điểm</span>
+              <span style="font-size:13px;font-weight:600">${j.dia_chi || '—'}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9">
+              <span style="font-size:13px;color:#64748b">Trạng thái</span>
+              <span style="font-size:13px;font-weight:600;color:${j.trang_thai==='dang_tuyen'?'#10b981':'#ef4444'}">${j.trang_thai==='dang_tuyen'?'🟢 Đang tuyển':'🔴 Đã đóng'}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9">
+              <span style="font-size:13px;color:#64748b">Ứng tuyển</span>
+              <span style="font-size:13px;font-weight:600">${j.so_ung_tuyen} hồ sơ</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0">
+              <span style="font-size:13px;color:#64748b">Ngày đăng</span>
+              <span style="font-size:13px;font-weight:600">${formatDate(j.ngay_tao)}</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:20px">
+            <a href="/job-detail.html?id=${j.id}" target="_blank" style="flex:1;padding:10px;background:rgba(6,182,212,0.1);border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;color:#06b6d4;text-align:center;text-decoration:none">🔗 Xem trang</a>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+    }
+
+    async function deleteJob(id) {
+      if (!confirm('Xóa công việc này? Hành động không thể hoàn tác.')) return;
+      try {
+        await API.admin.deleteJob(+id);
+        showToast('Đã xóa công việc.', 'success');
+        loadJobs();
+      } catch(e) { showToast(e.message || 'Xóa thất bại.', 'error'); }
+    }
+
+    loadJobs();
+  </script>
+</body>
+</html>

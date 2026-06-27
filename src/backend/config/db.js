@@ -1,0 +1,29 @@
+const mysql = require('mysql2');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 3306,
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'goi_y_viec_lam',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  charset: 'utf8mb4',
+});
+
+const promisePool = pool.promise();
+
+// Kiểm tra kết nối
+pool.getConnection((err, connection) => {
+  if (err) {
+    console.error('❌ Lỗi kết nối MySQL:', err.message);
+    return;
+  }
+  console.log('✅ Kết nối MySQL thành công!');
+  connection.release();
+});
+
+module.exports = promisePool;

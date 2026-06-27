@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ Sơ Ứng Tuyển — SmartJob</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/tailwind-config.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar" id="navbar"></nav>
+  <div class="page-wrapper">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,rgba(6,182,212,0.08) 0%,rgba(99,102,241,0.05) 100%);border-bottom:1px solid var(--border);padding:36px 0">
+      <div class="max-w-7xl mx-auto px-5">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+          <div>
+            <h1 style="font-size:28px;margin-bottom:6px">📄 Hồ Sơ <span class="text-primary">Ứng Tuyển</span></h1>
+            <p class="text-slate-500 text-[13px]">Xem xét và quản lý hồ sơ ứng viên cho các tin tuyển dụng của bạn</p>
+          </div>
+          <div style="display:flex;gap:12px;align-items:center">
+          <a href="/recruiter-jobs.html" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-black/5 text-slate-500 border border-slate-200 text-[13px] font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:text-primary cursor-pointer whitespace-nowrap" style="gap:8px">
+            💼 Quản lý tin tuyển dụng
+          </a>
+          <!-- Bell thông báo -->
+          <div style="position:relative">
+            <button id="bellBtn" onclick="toggleNotify()" style="position:relative;background:white;border:1.5px solid var(--border);border-radius:12px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--border)'">
+              🔔
+              <span id="notifyBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:white;font-size:10px;font-weight:700;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center"></span>
+            </button>
+            <!-- Dropdown -->
+            <div id="notifyDropdown" style="display:none;position:absolute;top:50px;right:0;width:360px;background:white;border:1.5px solid var(--border);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.12);z-index:200;overflow:hidden">
+              <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+                <div style="font-size:15px;font-weight:700">🔔 Thông báo</div>
+                <button onclick="markAllRead()" style="background:none;border:none;font-size:12px;color:var(--primary-light);cursor:pointer;font-weight:600">Đánh dấu tất cả đã đọc</button>
+              </div>
+              <div id="notifyList" style="max-height:380px;overflow-y:auto">
+                <div class="text-center" style="padding:32px;color:var(--text-slate-500);font-size:13px">
+                  <div class="loading-spinner" style="margin:0 auto 12px"></div>
+                  Đang tải...
+                </div>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+
+        <!-- Stats bar -->
+        <div id="statsBar" style="display:flex;gap:16px;margin-top:24px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-5" style="padding-top:28px;padding-bottom:60px">
+
+      <!-- Filter bar -->
+      <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:center">
+        <select id="filterJob" class="px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-[14px] outline-none" onchange="loadApplications()" style="min-width:220px">
+          <option value="">💼 Tất cả tin tuyển dụng</option>
+        </select>
+        <div class="tabs" style="margin:0">
+          <button class="tab-btn active" onclick="filterByStatus('',this)">🗂️ Tất cả <span id="cnt_all" style="background:rgba(0,0,0,0.07);border-radius:20px;padding:1px 8px;font-size:11px;margin-left:4px">0</span></button>
+          <button class="tab-btn" onclick="filterByStatus('cho_duyet',this)">⏳ Chờ duyệt <span id="cnt_cho_duyet" style="background:rgba(245,158,11,0.15);color:#f59e0b;border-radius:20px;padding:1px 8px;font-size:11px;margin-left:4px">0</span></button>
+          <button class="tab-btn" onclick="filterByStatus('chap_nhan',this)">✅ Chấp nhận <span id="cnt_chap_nhan" style="background:rgba(16,185,129,0.15);color:#10b981;border-radius:20px;padding:1px 8px;font-size:11px;margin-left:4px">0</span></button>
+          <button class="tab-btn" onclick="filterByStatus('tu_choi',this)">❌ Từ chối <span id="cnt_tu_choi" style="background:rgba(239,68,68,0.15);color:#ef4444;border-radius:20px;padding:1px 8px;font-size:11px;margin-left:4px">0</span></button>
+        </div>
+        <input type="text" id="searchInput" placeholder="🔍 Tìm ứng viên..." class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-[14px] outline-none" style="max-width:220px" oninput="renderFiltered()">
+      </div>
+
+      <!-- List -->
+      <div id="appContainer">
+        <div class="text-center" style="padding:60px 0">
+          <div class="loading-spinner" style="margin:0 auto 16px"></div>
+          <p class="text-slate-500 text-[13px]">Đang tải...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal xem chi tiết ứng viên -->
+  <div id="candidateModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:580px;margin:auto;max-height:85vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <h3 style="font-size:16px;font-weight:700">👤 Thông tin ứng viên</h3>
+        <button onclick="document.getElementById('candidateModal').style.display='none'" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-slate-500)">✕</button>
+      </div>
+      <div id="candidateModalBody"></div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+  <script src="/js/api.js"></script>
+  <script>
+    if (!requireAuth()) {}
+    const user = getUser();
+    if (user && user.vai_tro === 'ung_vien') window.location.href = '/profile.html';
+
+    let allApplications = [];
+    let currentStatus = '';
+
+    async function init() {
+      // Load jobs for filter dropdown
+      try {
+        const data = await API.admin.getJobs();
+        const sel = document.getElementById('filterJob');
+        (data.jobs || []).forEach(j => {
+          const opt = document.createElement('option');
+          opt.value = j.id; opt.textContent = `💼 ${j.tieu_de}`;
+          sel.appendChild(opt);
+        });
+        // Check URL param
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('job')) sel.value = params.get('job');
+      } catch(e) {}
+      loadApplications();
+    }
+
+    async function loadApplications() {
+      const jobId = document.getElementById('filterJob').value;
+      document.getElementById('appContainer').innerHTML = '<div class="text-center" style="padding:60px 0"><div class="loading-spinner" style="margin:0 auto 16px"></div><p class="text-slate-500 text-[13px]">Đang tải...</p></div>';
+      try {
+        const data = await API.admin.getApplications({ cong_viec_id: jobId, limit: 100 });
+        allApplications = data.applications || [];
+        updateStats();
+        renderFiltered();
+      } catch(e) {
+        document.getElementById('appContainer').innerHTML = `<div class="empty-state"><div class="empty-state-icon">😕</div><div class="empty-state-title">Không tải được dữ liệu</div></div>`;
+      }
+    }
+
+    function updateStats() {
+      const total = allApplications.length;
+      const cho = allApplications.filter(a => a.trang_thai === 'cho_duyet').length;
+      const chap = allApplications.filter(a => a.trang_thai === 'chap_nhan').length;
+      const tu = allApplications.filter(a => a.trang_thai === 'tu_choi').length;
+      document.getElementById('cnt_all').textContent = total;
+      document.getElementById('cnt_cho_duyet').textContent = cho;
+      document.getElementById('cnt_chap_nhan').textContent = chap;
+      document.getElementById('cnt_tu_choi').textContent = tu;
+      document.getElementById('statsBar').innerHTML = [
+        { icon: '📄', label: 'Tổng hồ sơ', value: total, color: '#6366f1' },
+        { icon: '⏳', label: 'Chờ duyệt', value: cho, color: '#f59e0b' },
+        { icon: '✅', label: 'Chấp nhận', value: chap, color: '#10b981' },
+        { icon: '❌', label: 'Từ chối', value: tu, color: '#ef4444' },
+      ].map(s => `
+        <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:14px 20px;display:flex;align-items:center;gap:12px;min-width:130px">
+          <span style="font-size:22px">${s.icon}</span>
+          <div>
+            <div style="font-size:20px;font-weight:800;color:${s.color}">${s.value}</div>
+            <div style="font-size:12px;color:var(--text-slate-500)">${s.label}</div>
+          </div>
+        </div>`).join('');
+    }
+
+    function filterByStatus(status, btn) {
+      currentStatus = status;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderFiltered();
+    }
+
+    function renderFiltered() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = allApplications.filter(a =>
+        (!currentStatus || a.trang_thai === currentStatus) &&
+        (!q || a.ung_vien.toLowerCase().includes(q) || a.cong_viec.toLowerCase().includes(q))
+      );
+      renderApplications(filtered);
+    }
+
+    function renderApplications(apps) {
+      const container = document.getElementById('appContainer');
+      if (!apps.length) {
+        container.innerHTML = `<div class="empty-state">
+          <div class="empty-state-icon">📭</div>
+          <div class="empty-state-title">Chưa có hồ sơ nào</div>
+          <p class="empty-state-desc">Hồ sơ ứng tuyển sẽ xuất hiện ở đây khi ứng viên nộp đơn.</p>
+        </div>`;
+        return;
+      }
+      container.innerHTML = apps.map((a, i) => {
+        const statusMap = {
+          cho_duyet: { bg: 'rgba(245,158,11,0.1)', color: '#f59e0b', border: 'rgba(245,158,11,0.25)', label: '⏳ Chờ duyệt' },
+          chap_nhan: { bg: 'rgba(16,185,129,0.1)', color: '#10b981', border: 'rgba(16,185,129,0.25)', label: '✅ Chấp nhận' },
+          tu_choi:   { bg: 'rgba(239,68,68,0.1)',  color: '#ef4444', border: 'rgba(239,68,68,0.25)',  label: '❌ Từ chối' },
+        }[a.trang_thai] || {};
+        return `
+          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:shadow-lg animate-fadeInUp" style="margin-bottom:14px;animation-delay:${i*0.03}s">
+            <div class="p-6">
+              <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+                <div style="width:46px;height:46px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;flex-shrink:0">${getInitials(a.ung_vien)}</div>
+                <div style="flex:1;min-width:200px">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+                    <div>
+                      <div style="font-size:16px;font-weight:700">${a.ung_vien}</div>
+                      <div style="font-size:13px;color:var(--text-slate-500);margin-top:2px">💼 ${a.cong_viec}</div>
+                    </div>
+                    <span style="background:${statusMap.bg};color:${statusMap.color};border:1px solid ${statusMap.border};border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;flex-shrink:0">${statusMap.label}</span>
+                  </div>
+
+                  <div style="display:flex;gap:16px;margin-bottom:10px;flex-wrap:wrap">
+                    <span style="font-size:12px;color:var(--text-slate-500)">🗓️ ${formatRelativeTime(a.ngay_ung_tuyen)}</span>
+                  </div>
+
+                  ${a.thu_gioi_thieu ? `
+                    <div style="background:rgba(0,0,0,0.03);border-left:3px solid var(--border);border-radius:0 8px 8px 0;padding:10px 14px;margin-bottom:12px">
+                      <div style="font-size:11px;font-weight:600;color:var(--text-slate-500);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">Thư giới thiệu</div>
+                      <div style="font-size:13px;color:var(--text-slate-600);line-height:1.6">${a.thu_gioi_thieu.length > 200 ? a.thu_gioi_thieu.substring(0,200) + '...' : a.thu_gioi_thieu}</div>
+                    </div>` : ''}
+
+                  <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button onclick="viewCandidate(${a.ung_vien_id})" style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;color:var(--primary-light);font-weight:600">👤 Xem hồ sơ</button>
+                    ${a.cv_file_name ? `<a href="/api/apply/cv/${a.id}" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:6px 14px;font-size:13px;color:#10b981;font-weight:600;text-decoration:none">⬇️ Tải CV</a>` : ''}
+                    ${a.trang_thai === 'cho_duyet' ? `
+                      <button onclick="updateStatus(${a.id},'chap_nhan',this)" style="background:#10b981;border:none;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;color:white;font-weight:600">✓ Chấp nhận</button>
+                      <button onclick="updateStatus(${a.id},'tu_choi',this)" style="background:#ef4444;border:none;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;color:white;font-weight:600">✗ Từ chối</button>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    async function updateStatus(id, status, btn) {
+      btn.disabled = true;
+      try {
+        await API.admin.updateApplication(id, { trang_thai: status });
+        showToast(`Đã ${getStatusLabel(status).toLowerCase()} hồ sơ.`, 'success');
+        loadApplications();
+      } catch(e) { showToast('Cập nhật thất bại.', 'error'); btn.disabled = false; }
+    }
+
+    async function viewCandidate(id) {
+      document.getElementById('candidateModal').style.display = 'flex';
+      document.getElementById('candidateModalBody').innerHTML = '<div class="text-center" style="padding:40px"><div class="loading-spinner" style="margin:0 auto"></div></div>';
+      try {
+        const data = await API.users.getCandidate(id);
+        const c = data.candidate;
+        document.getElementById('candidateModalBody').innerHTML = `
+          <div style="text-align:center;margin-bottom:20px">
+            <div style="width:64px;height:64px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:white;margin:0 auto 12px">${getInitials(c.ten)}</div>
+            <div style="font-size:18px;font-weight:700">${c.ten}</div>
+            <div style="font-size:13px;color:var(--text-slate-500)">${c.email}</div>
+            ${c.so_dien_thoai ? `<div style="font-size:13px;color:var(--text-slate-500)">${c.so_dien_thoai}</div>` : ''}
+          </div>
+          ${c.ho_so?.mo_ta_ban_than ? `<div style="margin-bottom:16px"><div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-slate-500);margin-bottom:6px">Giới thiệu</div><p style="font-size:14px;line-height:1.7">${c.ho_so.mo_ta_ban_than}</p></div>` : ''}
+          ${c.ho_so?.kinh_nghiem ? `<div style="margin-bottom:16px"><div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-slate-500);margin-bottom:6px">Kinh nghiệm</div><p style="font-size:14px;line-height:1.7;white-space:pre-line">${c.ho_so.kinh_nghiem}</p></div>` : ''}
+          ${c.ho_so?.hoc_van ? `<div style="margin-bottom:16px"><div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-slate-500);margin-bottom:6px">Học vấn</div><p style="font-size:14px;line-height:1.7;white-space:pre-line">${c.ho_so.hoc_van}</p></div>` : ''}
+          ${c.ky_nang?.length ? `<div><div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-slate-500);margin-bottom:8px">Kỹ năng</div><div style="display:flex;flex-wrap:wrap;gap:6px">${c.ky_nang.map(s => `<span class="skill-tag">${s.ten_ky_nang}</span>`).join('')}</div></div>` : ''}
+        `;
+      } catch(e) { document.getElementById('candidateModalBody').innerHTML = '<p style="color:var(--text-slate-500)">Không tải được thông tin.</p>'; }
+    }
+
+    init();
+
+    // ---- Notify logic ----
+    let notifyOpen = false;
+
+    async function loadNotify() {
+      try {
+        const data = await API.notify.getAll();
+        const notifs = data.notifications || [];
+        const unread = data.unread || 0;
+
+        // Badge
+        const badge = document.getElementById('notifyBadge');
+        if (unread > 0) {
+          badge.style.display = 'block';
+          badge.textContent = unread > 9 ? '9+' : unread;
+        } else {
+          badge.style.display = 'none';
+        }
+
+        // List
+        const list = document.getElementById('notifyList');
+        if (!notifs.length) {
+          list.innerHTML = '<div style="padding:32px;text-align:center;color:var(--text-slate-500);font-size:13px">Chưa có thông báo nào</div>';
+          return;
+        }
+        list.innerHTML = notifs.map(n => `
+          <div onclick="readNotify(${n.id}, '${n.lien_ket || ''}')" style="padding:14px 20px;border-bottom:1px solid var(--border);cursor:pointer;background:${n.da_doc ? 'white' : 'rgba(99,102,241,0.04)'};transition:background 0.15s" onmouseover="this.style.background='rgba(0,0,0,0.03)'" onmouseout="this.style.background='${n.da_doc ? 'white' : 'rgba(99,102,241,0.04)'}'">
+            <div style="display:flex;gap:10px;align-items:flex-start">
+              <span style="font-size:18px;flex-shrink:0">${getNotifyIcon(n.loai)}</span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:${n.da_doc ? '500' : '700'};margin-bottom:3px;color:var(--text-primary)">${n.tieu_de}</div>
+                <div style="font-size:12px;color:var(--text-slate-500);line-height:1.5">${n.noi_dung}</div>
+                <div style="font-size:11px;color:var(--text-slate-400);margin-top:4px">${formatRelativeTime(n.ngay_tao)}</div>
+              </div>
+              ${!n.da_doc ? '<span style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;margin-top:4px"></span>' : ''}
+            </div>
+          </div>
+        `).join('');
+      } catch(e) {}
+    }
+
+    function getNotifyIcon(loai) {
+      const icons = { chap_nhan: '✅', tu_choi: '❌', ung_vien_chon: '🎉', info: 'ℹ️' };
+      return icons[loai] || '🔔';
+    }
+
+    async function readNotify(id, link) {
+      try { await API.notify.markRead(id); } catch(e) {}
+      if (link) window.location.href = link;
+      else { toggleNotify(); loadNotify(); }
+    }
+
+    async function markAllRead() {
+      try {
+        await API.notify.markAllRead();
+        loadNotify();
+      } catch(e) {}
+    }
+
+    function toggleNotify() {
+      notifyOpen = !notifyOpen;
+      document.getElementById('notifyDropdown').style.display = notifyOpen ? 'block' : 'none';
+      if (notifyOpen) loadNotify();
+    }
+
+    // Đóng dropdown khi click ngoài
+    document.addEventListener('click', (e) => {
+      if (notifyOpen && !e.target.closest('#bellBtn') && !e.target.closest('#notifyDropdown')) {
+        notifyOpen = false;
+        document.getElementById('notifyDropdown').style.display = 'none';
+      }
+    });
+
+    // Load badge khi mở trang
+    setTimeout(loadNotify, 500);
+  </script>
+</body>
+</html>

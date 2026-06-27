@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartJob — Website Gợi Ý Việc Làm Thông Minh</title>
+  <meta name="description"
+    content="Nền tảng gợi ý việc làm thông minh dựa trên AI, giúp bạn tìm công việc phù hợp với kỹ năng và sở thích nhanh chóng.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/tailwind-config.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'></text></svg>">
+</head>
+
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar" id="navbar"></nav>
+
+  <!-- HERO -->
+  <section class="hero" id="hero">
+    <div class="max-w-7xl mx-auto px-5" style="width:100%">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center">
+        <div class="hero-content">
+          <div class="hero-badge animate-fadeInUp">
+            <span></span>
+            <span>Hệ Thống Gợi Ý Việc Làm</span>
+          </div>
+          <h1 class="hero-title animate-fadeInUp animate-delay-1">
+            Tìm Việc Làm<br><span class="text-primary">Thông Minh Hơn</span>
+          </h1>
+          <p class="hero-subtitle animate-fadeInUp animate-delay-2">
+            Hệ thống AI phân tích kỹ năng của bạn và đề xuất những công việc phù hợp nhất. Tiết kiệm thời gian, tăng tỷ
+            lệ thành công!
+          </p>
+          <div class="search-bar animate-fadeInUp animate-delay-3" style="margin-bottom:24px">
+            <input type="text" id="heroSearch" placeholder="Tìm công việc, kỹ năng, công ty..." style="font-size:15px">
+            <button
+              class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap"
+              onclick="searchJobs()"> Tìm kiếm</button>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap" class="animate-fadeInUp animate-delay-3">
+            <span class="text-slate-500 text-sm">Tìm nhanh:</span>
+            <a href="/jobs.html?search=ReactJS"
+              class="badge bg-primary/15 text-primary-light border border-primary/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium"
+              style="cursor:pointer">ReactJS</a>
+            <a href="/jobs.html?search=Java"
+              class="badge bg-primary/15 text-primary-light border border-primary/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium"
+              style="cursor:pointer">Java</a>
+            <a href="/jobs.html?search=Python"
+              class="badge bg-primary/15 text-primary-light border border-primary/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium"
+              style="cursor:pointer">Python</a>
+            <a href="/jobs.html?loai_hinh=thuc_tap"
+              class="badge bg-cyan-500/15 text-cyan-500 border border-cyan-500/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium"
+              style="cursor:pointer">Thực tập</a>
+          </div>
+        </div>
+        <div class="animate-fadeInUp animate-delay-2" style="position:relative">
+          <div style="position:relative;z-index:1">
+            <div id="featuredJobCard" class="job-card" style="cursor:default;animation:float 4s ease-in-out infinite">
+              <div class="skeleton" style="height:200px;border-radius:12px"></div>
+            </div>
+          </div>
+
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="py-[60px]" style="padding:40px 0;background:var(--bg-surface);border-bottom:1px solid var(--border)">
+    <div class="max-w-7xl mx-auto px-5">
+      <div class="stats-grid gap-6" id="statsGrid">
+        <div class="stat-card animate-fadeInUp">
+          <div class="stat-icon"></div>
+          <div class="stat-value" id="statJobs">...</div>
+          <div class="stat-label">Công việc đang tuyển</div>
+        </div>
+        <div class="stat-card animate-fadeInUp animate-delay-1">
+          <div class="stat-icon"></div>
+          <div class="stat-value" id="statUsers">...</div>
+          <div class="stat-label">Ứng viên đã tham gia</div>
+        </div>
+        <div class="stat-card animate-fadeInUp animate-delay-2">
+          <div class="stat-icon"></div>
+          <div class="stat-value" id="statCompanies">...</div>
+          <div class="stat-label">Công ty đối tác</div>
+        </div>
+        <div class="stat-card animate-fadeInUp animate-delay-3">
+          <div class="stat-icon"></div>
+          <div class="stat-value" id="statApplied">...</div>
+          <div class="stat-label">Lượt ứng tuyển</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="py-[60px]">
+    <div class="max-w-7xl mx-auto px-5">
+      <div class="text-center mb-8">
+        <h2 style="font-size:32px;margin-bottom:12px">Cách Hoạt Động <span class="text-primary">AI Gợi Ý</span></h2>
+        <p class="text-slate-500 text-[13px]" style="font-size:16px;max-width:500px;margin:0 auto">Chỉ 3 bước đơn giản
+          để nhận công việc phù hợp nhất với bạn</p>
+      </div>
+      <div class="grid gap-6 grid-cols-1 md:grid-cols-3" style="gap:32px">
+        <div
+          class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg animate-fadeInUp"
+          style="text-align:center;padding:40px 24px">
+          <div style="font-size:48px;margin-bottom:16px">👤</div>
+          <div
+            style="width:32px;height:32px;background:var(--gradient-primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin:0 auto 16px">
+            1</div>
+          <h3 style="margin-bottom:10px">Tạo Hồ Sơ</h3>
+          <p class="text-slate-500 text-[13px]">Đăng ký và điền thông tin cá nhân, kinh nghiệm làm việc, học vấn của
+            bạn.</p>
+        </div>
+        <div
+          class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg animate-fadeInUp animate-delay-1"
+          style="text-align:center;padding:40px 24px">
+          <div style="font-size:48px;margin-bottom:16px"></div>
+          <div
+            style="width:32px;height:32px;background:var(--gradient-primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin:0 auto 16px">
+            2</div>
+          <h3 style="margin-bottom:10px">Thêm Kỹ Năng</h3>
+          <p class="text-slate-500 text-[13px]">Liệt kê các kỹ năng và đánh giá mức độ thành thạo của từng kỹ năng.</p>
+        </div>
+        <div
+          class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg animate-fadeInUp animate-delay-2"
+          style="text-align:center;padding:40px 24px">
+          <div style="font-size:48px;margin-bottom:16px"></div>
+          <div
+            style="width:32px;height:32px;background:var(--gradient-primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin:0 auto 16px">
+            3</div>
+          <h3 style="margin-bottom:10px">Nhận Gợi Ý</h3>
+          <p class="text-slate-500 text-[13px]">AI phân tích và đề xuất các công việc phù hợp nhất với tỷ lệ % matching.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LATEST JOBS -->
+  <section class="py-[60px]" style="background:var(--bg-surface)">
+    <div class="max-w-7xl mx-auto px-5">
+      <div class="flex items-center justify-between mb-6">
+        <h2 style="font-size:28px">Việc Làm <span class="text-primary">Mới Nhất</span></h2>
+        <a href="/jobs.html"
+          class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-transparent text-primary-light border-[1.5px] border-primary text-[13px] font-semibold rounded-lg transition-all hover:bg-primary hover:text-white hover:-translate-y-0.5 cursor-pointer whitespace-nowrap !px-3 !py-1.5 !text-xs !rounded-md">Xem
+          tất cả →</a>
+      </div>
+      <div class="grid-cols-[repeat(auto-fill,minmax(320px,1fr))] grid gap-6" id="latestJobs">
+        <!-- Job cards sẽ load ở đây -->
+        <div class="job-card">
+          <div class="p-6">
+            <div class="skeleton skeleton-text wide"></div>
+            <div class="skeleton skeleton-text medium mt-8"></div>
+          </div>
+        </div>
+        <div class="job-card">
+          <div class="p-6">
+            <div class="skeleton skeleton-text wide"></div>
+            <div class="skeleton skeleton-text medium mt-8"></div>
+          </div>
+        </div>
+        <div class="job-card">
+          <div class="p-6">
+            <div class="skeleton skeleton-text wide"></div>
+            <div class="skeleton skeleton-text medium mt-8"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA SECTION -->
+  <section class="py-[60px]">
+    <div class="max-w-7xl mx-auto px-5">
+      <div
+        class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg"
+        style="background:linear-gradient(135deg,rgba(99,102,241,0.15) 0%,rgba(139,92,246,0.15) 100%);border-color:rgba(99,102,241,0.3);text-align:center;padding:60px 40px">
+        <h2 style="font-size:36px;margin-bottom:16px">Sẵn Sàng Bắt Đầu?</h2>
+        <p class="text-slate-500 text-[13px]" style="font-size:16px;max-width:480px;margin:0 auto 32px">Tạo tài khoản
+          miễn phí và nhận gợi ý việc làm được cá nhân hóa ngay hôm nay.</p>
+        <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+          <a href="/register.html"
+            class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap !px-7 !py-3.5 !text-base">
+            Tạo tài khoản miễn phí</a>
+          <a href="/jobs.html"
+            class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-black/5 text-slate-500 border border-slate-200 text-[13px] font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:text-primary cursor-pointer whitespace-nowrap !px-7 !py-3.5 !text-base">
+            Khám phá việc làm</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="max-w-7xl mx-auto px-5">
+      <div class="footer-bottom"
+        style="text-align: center; padding: 24px 0; color: var(--text-slate-500); font-size: 14px;">
+        <p>© 2026 SmartJob — Website Gợi Ý Việc Làm Thông Minh.</p>
+      </div>
+    </div>
+  </footer>
+
+  <div id="toast-container" class="toast-container"></div>
+  <script src="/js/api.js"></script>
+  <script>
+    // Load stats
+    async function loadStats() {
+      try {
+        const data = await API.jobs.getStats();
+        const s = data.stats;
+        animateNumber('statJobs', s.tongCongViec);
+        animateNumber('statUsers', s.tongUngVien);
+        animateNumber('statCompanies', s.tongCongTy);
+        animateNumber('statApplied', s.tongUngTuyen);
+      } catch (e) {
+        document.getElementById('statJobs').textContent = '50+';
+        document.getElementById('statUsers').textContent = '200+';
+        document.getElementById('statCompanies').textContent = '30+';
+        document.getElementById('statApplied').textContent = '500+';
+      }
+    }
+
+    function animateNumber(id, target) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      let counter = 0;
+      const step = Math.ceil(target / 40);
+      const timer = setInterval(() => {
+        counter = Math.min(counter + step, target);
+        el.textContent = counter.toLocaleString('vi-VN');
+        if (counter >= target) clearInterval(timer);
+      }, 40);
+    }
+
+    // Load latest jobs
+    async function loadLatestJobs() {
+      try {
+        const data = await API.jobs.getAll({ limit: 6 });
+        const container = document.getElementById('latestJobs');
+        if (!data.jobs || data.jobs.length === 0) {
+          container.innerHTML = '<p class="text-slate-500 text-[13px] text-center" style="grid-column:1/-1">Chưa có công việc nào.</p>';
+          return;
+        }
+        container.innerHTML = data.jobs.map(job => renderJobCard(job)).join('');
+      } catch (e) {
+        document.getElementById('latestJobs').innerHTML = '<p class="text-slate-500 text-[13px] text-center" style="grid-column:1/-1">Không thể tải dữ liệu.</p>';
+      }
+    }
+
+    // Load featured job (đặt vào hero bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg)
+    async function loadFeaturedJob() {
+      try {
+        const data = await API.jobs.getAll({ limit: 1 });
+        if (data.jobs && data.jobs.length > 0) {
+          const job = data.jobs[0];
+          document.getElementById('featuredJobCard').innerHTML = `
+            <div class="job-card-header">
+              <div class="company-logo">${getInitials(job.ten_cong_ty)}</div>
+              <div>
+                <div class="job-card-title">${job.tieu_de}</div>
+                <div class="job-card-company"> ${job.ten_cong_ty}</div>
+              </div>
+            </div>
+            <div class="job-card-meta">
+              <span> ${job.dia_chi || 'Hà Nội'}</span>
+              <span> ${getJobTypeLabel(job.loai_hinh)}</span>
+            </div>
+            <div class="job-card-skills">
+              ${(job.ky_nang || []).slice(0, 3).map(s => `<span class="skill-tag">${s.ten_ky_nang}</span>`).join('')}
+            </div>
+            <div class="job-card-footer">
+              <span class="salary-badge"> ${formatSalary(job.muc_luong_min, job.muc_luong_max)}</span>
+              <a href="/job-detail.html?id=${job.id}" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap !px-3 !py-1.5 !text-xs !rounded-md" onclick="event.stopPropagation()">Xem ngay →</a>
+            </div>
+          `;
+        }
+      } catch (e) { }
+    }
+
+    function renderJobCard(job) {
+      const skills = (job.ky_nang || []).slice(0, 3);
+      const more = (job.ky_nang || []).length - 3;
+      return `
+        <div class="job-card animate-fadeInUp" onclick="window.location.href='/job-detail.html?id=${job.id}'">
+          <div class="job-card-header">
+            <div class="company-logo">${getInitials(job.ten_cong_ty)}</div>
+            <div style="flex:1;min-width:0">
+              <div class="job-card-title">${job.tieu_de}</div>
+              <div class="job-card-company"> ${job.ten_cong_ty}</div>
+            </div>
+            <span class="badge ${job.loai_hinh === 'thuc_tap' ? 'bg-cyan-500/15 text-cyan-500 border border-cyan-500/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium' : 'bg-primary/15 text-primary-light border border-primary/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium'}" style="flex-shrink:0">${getJobTypeLabel(job.loai_hinh)}</span>
+          </div>
+          <div class="job-card-meta">
+            <span> ${job.dia_chi || 'Linh hoạt'}</span>
+            <span> ${formatRelativeTime(job.ngay_tao)}</span>
+          </div>
+          <div class="job-card-skills">
+            ${skills.map(s => `<span class="skill-tag">${s.ten_ky_nang}</span>`).join('')}
+            ${more > 0 ? `<span class="badge bg-black/5 text-slate-500 border border-slate-200 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium">+${more}</span>` : ''}
+          </div>
+          <div class="job-card-footer">
+            <span class="salary-badge"> ${formatSalary(job.muc_luong_min, job.muc_luong_max)}</span>
+            <span class="text-slate-500 text-sm">👁 ${job.luot_xem || 0}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function searchJobs() {
+      const q = document.getElementById('heroSearch').value.trim();
+      window.location.href = q ? `/jobs.html?search=${encodeURIComponent(q)}` : '/jobs.html';
+    }
+
+    document.getElementById('heroSearch').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') searchJobs();
+    });
+
+    // Init
+    loadStats();
+    loadLatestJobs();
+    loadFeaturedJob();
+  </script>
+</body>
+
+</html>

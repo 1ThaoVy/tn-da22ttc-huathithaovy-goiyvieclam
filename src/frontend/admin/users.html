@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý Người dùng — Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/tailwind-config.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { background: #f8fafc; }
+    .sidebar { background: linear-gradient(180deg,#1e1b4b 0%,#312e81 100%); padding:0; position:sticky; top:0; height:100vh; width:240px; display:flex; flex-direction:column; z-index:100; }
+    .sidebar-brand { padding:24px 20px 20px; border-bottom:1px solid rgba(255,255,255,0.1); display:flex; align-items:center; gap:10px; }
+    .sidebar-brand span { font-size:20px; font-weight:800; color:white; }
+    .sidebar-nav { padding:16px 12px; flex:1; }
+    .nav-section { font-size:10px; font-weight:700; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:1px; padding:12px 8px 6px; }
+    .nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; cursor:pointer; color:rgba(255,255,255,0.65); font-size:13px; font-weight:500; transition:all 0.15s; text-decoration:none; margin-bottom:2px; }
+    .nav-item:hover { background:rgba(255,255,255,0.1); color:white; }
+    .nav-item.active { background:rgba(255,255,255,0.15); color:white; font-weight:600; }
+    .nav-item .icon { font-size:16px; width:20px; text-align:center; }
+    .sidebar-footer { padding:16px 12px; border-top:1px solid rgba(255,255,255,0.1); }
+    .main-content { padding:28px 32px; overflow-y:auto; }
+    table { width:100%; border-collapse:collapse; }
+    th { background:#f1f5f9; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#64748b; padding:10px 14px; text-align:left; }
+    td { padding:12px 14px; border-bottom:1px solid #f1f5f9; font-size:13px; vertical-align:middle; }
+    tr:hover td { background:#fafafa; }
+  </style>
+</head>
+<body>
+  <div style="display:grid;grid-template-columns:240px 1fr;min-height:100vh">
+  <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="/images/logo.png" alt="logo" style="width:32px;height:32px;object-fit:contain">
+        <span>SmartJob</span>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">Tổng quan</div>
+        <a href="/admin/dashboard.html" class="nav-item"><span class="icon">📊</span> Dashboard</a>
+        <div class="nav-section">Quản lý</div>
+        <a href="/admin/users.html" class="nav-item active"><span class="icon">👥</span> Người dùng</a>
+        <a href="/admin/jobs.html" class="nav-item"><span class="icon">💼</span> Công việc</a>
+        <a href="/admin/applications.html" class="nav-item"><span class="icon">📄</span> Ứng tuyển</a>
+        <a href="/admin/companies.html" class="nav-item"><span class="icon">🏢</span> Công ty</a>
+        <div class="nav-section">Hệ thống</div>
+        <a href="/index.html" class="nav-item"><span class="icon">🌐</span> Trang chủ</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px">
+          <div id="sbAv" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">A</div>
+          <div>
+            <div id="sbName" style="font-size:13px;font-weight:600;color:#fff">Admin</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.4)">Quản trị viên</div>
+          </div>
+        </div>
+        <button onclick="handleLogout()" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px;font-size:13px;color:rgba(255,255,255,0.7);cursor:pointer">🚪 Đăng xuất</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h1 style="font-size:22px;font-weight:800;margin-bottom:2px">👥 Quản lý Người dùng</h1>
+          <p style="font-size:13px;color:#64748b">Danh sách tất cả tài khoản trong hệ thống</p>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <input type="text" id="searchInput" placeholder="🔍 Tìm tên, email..." style="padding:9px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none;min-width:220px" oninput="loadUsers()">
+          <select id="filterRole" style="padding:9px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;outline:none" onchange="loadUsers()">
+            <option value="">Tất cả vai trò</option>
+            <option value="ung_vien">Ứng viên</option>
+            <option value="nha_tuyen_dung">Nhà tuyển dụng</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="background:white;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden">
+        <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
+          <span id="resultLabel" style="font-size:13px;color:#64748b"></span>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Họ tên</th>
+                <th>Email</th>
+                <th>Vai trò</th>
+                <th>Công ty</th>
+                <th>Điện thoại</th>
+                <th>Ngày tạo</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody id="usersTable">
+              <tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8">Đang tải...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="pagination" style="padding:16px 20px;display:flex;gap:6px;justify-content:center"></div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+  <script src="/js/api.js"></script>
+  <script>
+    if (!requireAuth()) {}
+    const user = getUser();
+    if (!user || user.vai_tro !== 'admin') window.location.href = '/index.html';
+
+    // Hiển thị thông tin user ở sidebar
+    if (user) {
+      document.getElementById('sbName').textContent = user.ten || 'Admin';
+      document.getElementById('sbAv').textContent = user.ten ? user.ten.split(' ').pop()[0].toUpperCase() : 'A';
+    }
+
+    let currentPage = 1;
+    let _userCache = {};
+    let _allCompanies = [];
+    const roleLabels = { ung_vien: 'Ứng viên', nha_tuyen_dung: 'Nhà tuyển dụng', admin: 'Admin' };
+    const roleColors = { ung_vien: '#6366f1', nha_tuyen_dung: '#10b981', admin: '#ef4444' };
+    const roleBg = { ung_vien: 'rgba(99,102,241,0.1)', nha_tuyen_dung: 'rgba(16,185,129,0.1)', admin: 'rgba(239,68,68,0.1)' };
+
+    // Load danh sách công ty để dùng trong modal gán
+    async function loadCompanies() {
+      try {
+        const data = await API.admin.getCompanies();
+        _allCompanies = data.companies || [];
+      } catch(e) {}
+    }
+
+    async function loadUsers() {
+      const search = document.getElementById('searchInput').value;
+      const vai_tro = document.getElementById('filterRole').value;
+      try {
+        const data = await API.admin.getUsers({ search, vai_tro, page: currentPage, limit: 20 });
+        document.getElementById('resultLabel').textContent = `${data.pagination.total} người dùng`;
+        document.getElementById('usersTable').innerHTML = data.users.map((u, i) => {
+          _userCache[u.id] = u;
+          const companyCell = u.vai_tro === 'nha_tuyen_dung'
+            ? (u.ten_cong_ty
+                ? `<span style="color:#10b981;font-weight:600;font-size:12px">${u.ten_cong_ty}</span>`
+                : `<button onclick="openAssignCompany(${u.id})" style="background:rgba(245,158,11,0.1);color:#f59e0b;border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;font-weight:600">⚠️ Chưa có công ty</button>`)
+            : `<span style="color:#cbd5e1;font-size:12px">—</span>`;
+          return `
+          <tr>
+            <td style="color:#94a3b8;font-size:12px">${(currentPage-1)*20 + i + 1}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="width:32px;height:32px;border-radius:50%;background:#6366f1;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0">${getInitials(u.ten)}</div>
+                <span style="font-weight:600">${u.ten}</span>
+              </div>
+            </td>
+            <td style="color:#64748b">${u.email}</td>
+            <td><span style="background:${roleBg[u.vai_tro]};color:${roleColors[u.vai_tro]};border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600">${roleLabels[u.vai_tro] || u.vai_tro}</span></td>
+            <td>${companyCell}</td>
+            <td style="color:#64748b">${u.so_dien_thoai || '—'}</td>
+            <td style="color:#94a3b8;font-size:12px">${formatDate(u.ngay_tao)}</td>
+            <td>
+              <div style="display:flex;gap:6px">
+                <button onclick="viewUser(${u.id})" style="background:rgba(6,182,212,0.1);color:#06b6d4;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600">👁️</button>
+                <button onclick="openEditUser(${u.id})" style="background:rgba(99,102,241,0.1);color:#6366f1;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600">✏️</button>
+                <button onclick="deleteUser(${u.id})" style="background:rgba(239,68,68,0.1);color:#ef4444;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600">🗑️</button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('') || '<tr><td colspan="8" style="text-align:center;padding:40px;color:#94a3b8">Không có dữ liệu</td></tr>';
+
+        renderPagination(data.pagination);
+      } catch(e) { showToast('Không tải được dữ liệu.', 'error'); }
+    }
+
+    function renderPagination(p) {
+      const el = document.getElementById('pagination');
+      const totalPages = Math.ceil(p.total / p.limit);
+      if (totalPages <= 1) { el.innerHTML = ''; return; }
+      let html = '';
+      for (let i = 1; i <= totalPages; i++) {
+        html += `<button onclick="goPage(${i})" style="padding:6px 12px;border-radius:8px;border:1px solid ${i===currentPage?'#6366f1':'#e2e8f0'};background:${i===currentPage?'#6366f1':'white'};color:${i===currentPage?'white':'#64748b'};font-size:13px;cursor:pointer">${i}</button>`;
+      }
+      el.innerHTML = html;
+    }
+
+    function goPage(p) { currentPage = p; loadUsers(); }
+
+    function openEditUser(id) {
+      const u = _userCache[id];
+      if (!u) return;
+      const companyOptions = _allCompanies.map(c =>
+        `<option value="${c.id}" ${u.cong_ty_id === c.id ? 'selected' : ''}>${c.ten_cong_ty}</option>`
+      ).join('');
+      const modal = document.createElement('div');
+      modal.id = 'editUserModal';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px';
+      modal.innerHTML = `
+        <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:420px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h3 style="font-size:18px;font-weight:700">✏️ Sửa người dùng</h3>
+            <button onclick="document.getElementById('editUserModal').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#64748b">✕</button>
+          </div>
+          <div style="margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Họ tên</div>
+            <input id="eu_ten" value="${u.ten}" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none">
+          </div>
+          <div style="margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Vai trò</div>
+            <select id="eu_role" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none">
+              <option value="ung_vien" ${u.vai_tro==='ung_vien'?'selected':''}>Ứng viên</option>
+              <option value="nha_tuyen_dung" ${u.vai_tro==='nha_tuyen_dung'?'selected':''}>Nhà tuyển dụng</option>
+              <option value="admin" ${u.vai_tro==='admin'?'selected':''}>Admin</option>
+            </select>
+          </div>
+          <div style="margin-bottom:20px">
+            <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Gán công ty</div>
+            <select id="eu_company" style="width:100%;padding:10px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:14px;outline:none">
+              <option value="">— Không có công ty —</option>
+              ${companyOptions}
+            </select>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button onclick="document.getElementById('editUserModal').remove()" style="flex:1;padding:10px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;background:white;color:#64748b">Hủy</button>
+            <button onclick="saveUser(${u.id})" style="flex:2;padding:10px;background:#6366f1;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;color:white">💾 Lưu</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+    }
+
+    function openAssignCompany(id) {
+      openEditUser(id);
+    }
+
+    async function saveUser(id) {
+      try {
+        const companyVal = document.getElementById('eu_company').value;
+        await API.admin.updateUser(id, {
+          ten: document.getElementById('eu_ten').value,
+          vai_tro: document.getElementById('eu_role').value,
+          cong_ty_id: companyVal ? parseInt(companyVal) : null,
+        });
+        showToast('Cập nhật thành công!', 'success');
+        document.getElementById('editUserModal').remove();
+        loadUsers();
+      } catch(e) { showToast(e.message || 'Thất bại.', 'error'); }
+    }
+
+    async function deleteUser(id) {
+      if (!confirm('Xóa người dùng này? Hành động không thể hoàn tác.')) return;
+      try {
+        await API.admin.deleteUser(id);
+        showToast('Đã xóa người dùng.', 'success');
+        loadUsers();
+      } catch(e) { showToast(e.message || 'Xóa thất bại.', 'error'); }
+    }
+
+    function viewUser(id) {
+      const u = _userCache[id];
+      if (!u) return;
+      const roleLabels = { ung_vien: 'Ứng viên', nha_tuyen_dung: 'Nhà tuyển dụng', admin: 'Admin' };
+      const roleColors = { ung_vien: '#6366f1', nha_tuyen_dung: '#10b981', admin: '#ef4444' };
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px';
+      modal.innerHTML = `
+        <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:440px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <h3 style="font-size:18px;font-weight:700">👤 Thông tin người dùng</h3>
+            <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#64748b">✕</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:16px;background:#f8fafc;border-radius:12px">
+            <div style="width:52px;height:52px;border-radius:50%;background:#6366f1;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:white;flex-shrink:0">${getInitials(u.ten)}</div>
+            <div>
+              <div style="font-size:16px;font-weight:700">${u.ten}</div>
+              <span style="background:${roleColors[u.vai_tro]}1a;color:${roleColors[u.vai_tro]};border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600">${roleLabels[u.vai_tro] || u.vai_tro}</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9">
+              <span style="font-size:13px;color:#64748b">Email</span>
+              <span style="font-size:13px;font-weight:600">${u.email}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9">
+              <span style="font-size:13px;color:#64748b">Điện thoại</span>
+              <span style="font-size:13px;font-weight:600">${u.so_dien_thoai || '—'}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9">
+              <span style="font-size:13px;color:#64748b">Địa chỉ</span>
+              <span style="font-size:13px;font-weight:600">${u.dia_chi || '—'}</span>
+            </div>
+            ${u.vai_tro === 'nha_tuyen_dung' ? `
+            <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9">
+              <span style="font-size:13px;color:#64748b">Công ty</span>
+              <span style="font-size:13px;font-weight:600">${u.ten_cong_ty || '⚠️ Chưa có'}</span>
+            </div>` : ''}
+            <div style="display:flex;justify-content:space-between;padding:10px 0">
+              <span style="font-size:13px;color:#64748b">Ngày tạo</span>
+              <span style="font-size:13px;font-weight:600">${formatDate(u.ngay_tao)}</span>
+            </div>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+    }
+
+    loadCompanies();
+    loadUsers();
+  </script>
+</body>
+</html>

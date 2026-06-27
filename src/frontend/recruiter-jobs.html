@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tin Tuyển Dụng Của Tôi — SmartJob</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/tailwind-config.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar" id="navbar"></nav>
+  <div class="page-wrapper">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,rgba(99,102,241,0.08) 0%,rgba(139,92,246,0.05) 100%);border-bottom:1px solid var(--border);padding:36px 0">
+      <div class="max-w-7xl mx-auto px-5">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+          <div>
+            <h1 style="font-size:28px;margin-bottom:6px">💼 Tin Tuyển Dụng <span class="text-primary">Của Tôi</span></h1>
+            <p class="text-slate-500 text-[13px]">Quản lý và theo dõi tất cả tin tuyển dụng bạn đã đăng</p>
+          </div>
+          <button onclick="openPostJobModal()" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap" style="gap:8px;padding:12px 24px;font-size:14px">
+            ➕ Đăng tin mới
+          </button>
+        </div>
+
+        <!-- Stats bar -->
+        <div id="statsBar" style="display:flex;gap:16px;margin-top:24px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-5" style="padding-top:28px;padding-bottom:60px">
+
+      <!-- Filter & Search -->
+      <div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:center">
+        <input type="text" id="searchInput" placeholder="🔍 Tìm theo tiêu đề..." class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] outline-none transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15" style="max-width:300px" oninput="filterJobs()">
+        <select id="filterStatus" class="px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-[14px] outline-none" onchange="filterJobs()">
+          <option value="">Tất cả trạng thái</option>
+          <option value="dang_tuyen">🟢 Đang tuyển</option>
+          <option value="da_dong">🔴 Đã đóng</option>
+        </select>
+        <select id="filterType" class="px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-[14px] outline-none" onchange="filterJobs()">
+          <option value="">Tất cả loại hình</option>
+          <option value="toan_thoi_gian">Toàn thời gian</option>
+          <option value="ban_thoi_gian">Bán thời gian</option>
+          <option value="tu_do">Tự do</option>
+          <option value="thuc_tap">Thực tập</option>
+        </select>
+        <span id="resultLabel" class="text-slate-500 text-[13px]" style="margin-left:auto"></span>
+      </div>
+
+      <!-- Jobs list -->
+      <div id="jobsContainer">
+        <div class="text-center" style="padding:60px 0">
+          <div class="loading-spinner" style="margin:0 auto 16px"></div>
+          <p class="text-slate-500 text-[13px]">Đang tải...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal đăng/sửa tin -->
+  <div id="postJobModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;overflow-y:auto;padding:20px">
+    <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:640px;margin:auto;position:relative">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <h3 id="modalTitle" style="font-size:18px;font-weight:700">➕ Đăng Tin Tuyển Dụng</h3>
+        <button onclick="closePostJobModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-slate-500)">✕</button>
+      </div>
+      <form id="postJobForm" onsubmit="submitJob(event)">
+        <div class="mb-5">
+          <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Tiêu đề *</label>
+          <input type="text" id="j_tieu_de" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-[14px] outline-none" placeholder="VD: Senior ReactJS Developer" required>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="mb-5">
+            <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Loại hình</label>
+            <select id="j_loai_hinh" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-[14px] outline-none">
+              <option value="toan_thoi_gian">Toàn thời gian</option>
+              <option value="ban_thoi_gian">Bán thời gian</option>
+              <option value="tu_do">Tự do</option>
+              <option value="thuc_tap">Thực tập</option>
+            </select>
+          </div>
+          <div class="mb-5">
+            <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Địa điểm</label>
+            <input type="text" id="j_dia_chi" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-[14px] outline-none" placeholder="Hà Nội">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="mb-5">
+            <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Lương tối thiểu (VNĐ)</label>
+            <input type="number" id="j_luong_min" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-[14px] outline-none" placeholder="10000000" min="0">
+          </div>
+          <div class="mb-5">
+            <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Lương tối đa (VNĐ)</label>
+            <input type="number" id="j_luong_max" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-[14px] outline-none" placeholder="20000000" min="0">
+          </div>
+        </div>
+        <div class="mb-5">
+          <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Hạn nộp</label>
+          <input type="date" id="j_han_nop" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-[14px] outline-none">
+        </div>
+        <div class="mb-5">
+          <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Mô tả công việc *</label>
+          <textarea id="j_mo_ta" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-[14px] outline-none" rows="4" placeholder="Mô tả chi tiết về vị trí, nhiệm vụ..." required></textarea>
+        </div>
+        <div class="mb-5">
+          <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Yêu cầu ứng viên</label>
+          <textarea id="j_yeu_cau" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-[14px] outline-none" rows="3" placeholder="Bằng cấp, kinh nghiệm, kỹ năng..."></textarea>
+        </div>
+        <div class="mb-5">
+          <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Quyền lợi</label>
+          <textarea id="j_quyen_loi" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-[14px] outline-none" rows="3" placeholder="Lương thưởng, bảo hiểm, đào tạo..."></textarea>
+        </div>
+        <div class="mb-5">
+          <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">🎯 Kỹ năng yêu cầu</label>
+          <div style="display:grid;grid-template-columns:1fr 140px auto;gap:8px;align-items:end;margin-bottom:10px">
+            <div style="position:relative">
+              <input type="text" id="j_skill_input" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] outline-none" placeholder="Tìm hoặc nhập kỹ năng..." autocomplete="off" oninput="searchJobSkill(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();addJobSkill()}">
+              <div id="j_skill_dropdown" style="display:none;position:absolute;z-index:200;background:white;border:1px solid #e2e8f0;border-radius:10px;width:100%;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.12);margin-top:4px"></div>
+            </div>
+            <select id="j_skill_level" class="w-full px-3 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] outline-none">
+              <option value="1">1 - Cơ bản</option>
+              <option value="2" selected>2 - Trung bình</option>
+              <option value="3">3 - Thành thạo</option>
+              <option value="4">4 - Chuyên sâu</option>
+              <option value="5">5 - Chuyên gia</option>
+            </select>
+            <button type="button" onclick="addJobSkill()" style="background:#6366f1;color:white;border:none;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">+ Thêm</button>
+          </div>
+          <div id="j_skills_list" style="display:flex;flex-direction:column;gap:6px">
+            <div id="j_no_skill_msg" style="font-size:13px;color:#94a3b8">Chưa có kỹ năng nào. Thêm kỹ năng để AI gợi ý ứng viên phù hợp.</div>
+          </div>
+        </div>
+        <input type="hidden" id="j_edit_id">
+        <div style="display:flex;gap:12px;margin-top:8px">
+          <button type="button" onclick="closePostJobModal()" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-black/5 text-slate-500 border border-slate-200 text-[13px] font-semibold rounded-lg cursor-pointer whitespace-nowrap" style="flex:1">Hủy</button>
+          <button type="submit" id="postJobBtn" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 cursor-pointer whitespace-nowrap" style="flex:2">➕ Đăng tuyển dụng</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal ứng viên phù hợp -->
+  <div id="suggestModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:660px;margin:auto;max-height:85vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <h3 id="suggestModalTitle" style="font-size:16px;font-weight:700">✨ Ứng viên phù hợp</h3>
+        <button onclick="document.getElementById('suggestModal').style.display='none'" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-slate-500)">✕</button>
+      </div>
+      <div id="suggestModalBody"></div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+  <script src="/js/api.js"></script>
+  <script>
+    if (!requireAuth()) {}
+    const user = getUser();
+    if (user && user.vai_tro === 'ung_vien') window.location.href = '/profile.html';
+
+    let allJobs = [];
+    let editingJobId = null;
+
+    async function loadJobs() {
+      try {
+        const data = await API.admin.getJobs();
+        allJobs = data.jobs || [];
+        renderStats();
+        filterJobs();
+      } catch(e) {
+        document.getElementById('jobsContainer').innerHTML = `<div class="empty-state"><div class="empty-state-icon">😕</div><div class="empty-state-title">Không tải được dữ liệu</div></div>`;
+      }
+    }
+
+    function renderStats() {
+      const total = allJobs.length;
+      const active = allJobs.filter(j => j.trang_thai === 'dang_tuyen').length;
+      const totalApps = allJobs.reduce((s, j) => s + (j.so_ung_tuyen || 0), 0);
+      document.getElementById('statsBar').innerHTML = [
+        { icon: '💼', label: 'Tổng tin', value: total, color: '#6366f1' },
+        { icon: '🟢', label: 'Đang tuyển', value: active, color: '#10b981' },
+        { icon: '🔴', label: 'Đã đóng', value: total - active, color: '#ef4444' },
+        { icon: '📄', label: 'Tổng ứng tuyển', value: totalApps, color: '#f59e0b' },
+      ].map(s => `
+        <div style="background:white;border:1px solid var(--border);border-radius:12px;padding:14px 20px;display:flex;align-items:center;gap:12px;min-width:140px">
+          <span style="font-size:22px">${s.icon}</span>
+          <div>
+            <div style="font-size:20px;font-weight:800;color:${s.color}">${s.value}</div>
+            <div style="font-size:12px;color:var(--text-slate-500)">${s.label}</div>
+          </div>
+        </div>`).join('');
+    }
+
+    function filterJobs() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const status = document.getElementById('filterStatus').value;
+      const type = document.getElementById('filterType').value;
+      const filtered = allJobs.filter(j =>
+        (!q || j.tieu_de.toLowerCase().includes(q)) &&
+        (!status || j.trang_thai === status) &&
+        (!type || j.loai_hinh === type)
+      );
+      document.getElementById('resultLabel').textContent = `${filtered.length} tin tuyển dụng`;
+      renderJobs(filtered);
+    }
+
+    function renderJobs(jobs) {
+      const container = document.getElementById('jobsContainer');
+      if (!jobs.length) {
+        container.innerHTML = `<div class="empty-state">
+          <div class="empty-state-icon">📭</div>
+          <div class="empty-state-title">Chưa có tin tuyển dụng nào</div>
+          <p class="empty-state-desc">Đăng tin đầu tiên để bắt đầu tuyển dụng!</p>
+          <button onclick="openPostJobModal()" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 cursor-pointer whitespace-nowrap mt-6">➕ Đăng tin ngay</button>
+        </div>`;
+        return;
+      }
+      container.innerHTML = jobs.map((j, i) => `
+        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg animate-fadeInUp" style="margin-bottom:16px;animation-delay:${i*0.04}s">
+          <div class="p-6">
+            <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+              <div style="width:52px;height:52px;border-radius:12px;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">💼</div>
+              <div style="flex:1;min-width:200px">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px">
+                  <div>
+                    <div style="font-size:17px;font-weight:700;margin-bottom:4px">${j.tieu_de}</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                      <span style="background:rgba(0,0,0,0.05);border-radius:20px;padding:2px 10px;font-size:12px">${getJobTypeLabel(j.loai_hinh)}</span>
+                      ${j.dia_chi ? `<span style="font-size:12px;color:var(--text-slate-500)"> ${j.dia_chi}</span>` : ''}
+                      <span style="font-size:12px;color:var(--text-slate-500)"> ${formatSalary(j.muc_luong_min, j.muc_luong_max)}</span>
+                    </div>
+                  </div>
+                  <span style="background:${j.trang_thai==='dang_tuyen'?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)'};color:${j.trang_thai==='dang_tuyen'?'#10b981':'#ef4444'};border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;flex-shrink:0">${j.trang_thai==='dang_tuyen'?'🟢 Đang tuyển':'🔴 Đã đóng'}</span>
+                </div>
+
+                <div style="display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap">
+                  <div style="display:flex;align-items:center;gap:6px;background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2);border-radius:8px;padding:6px 12px">
+                    <span style="font-size:18px">📄</span>
+                    <div>
+                      <div style="font-size:16px;font-weight:700;color:#06b6d4">${j.so_ung_tuyen}</div>
+                      <div style="font-size:11px;color:var(--text-slate-500)">Ứng tuyển</div>
+                    </div>
+                  </div>
+                  ${j.han_nop ? `<div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-slate-500)">📅 Hạn: ${formatDate(j.han_nop)}</div>` : ''}
+                  <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-slate-500)">🕐 ${formatRelativeTime(j.ngay_tao)}</div>
+                </div>
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button onclick="showSuggestedCandidates(${j.id},'${j.tieu_de.replace(/'/g,"\\'")}') " style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--primary-light);font-weight:600">✨ Ứng viên phù hợp</button>
+                  <button onclick="window.location.href='/recruiter-applications.html?job=${j.id}'" style="background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.3);border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;color:#06b6d4;font-weight:600">📄 Xem hồ sơ (${j.so_ung_tuyen})</button>
+                  <button onclick="toggleStatus(${j.id},'${j.trang_thai}',this)" style="background:${j.trang_thai==='dang_tuyen'?'rgba(239,68,68,0.08)':'rgba(16,185,129,0.08)'};border:1px solid ${j.trang_thai==='dang_tuyen'?'rgba(239,68,68,0.3)':'rgba(16,185,129,0.3)'};border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;color:${j.trang_thai==='dang_tuyen'?'#ef4444':'#10b981'};font-weight:600">${j.trang_thai==='dang_tuyen'?'🔴 Đóng tin':'🟢 Mở lại'}</button>
+                  <button onclick="editJob(${j.id})" style="background:none;border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--text-slate-500)">✏️ Sửa</button>
+                  <button onclick="deleteJob(${j.id},this)" style="background:none;border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;color:#ef4444">🗑️ Xóa</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>`).join('');
+    }
+
+    function openPostJobModal(job) {
+      editingJobId = job ? job.id : null;
+      document.getElementById('modalTitle').textContent = job ? '✏️ Sửa Tin Tuyển Dụng' : '➕ Đăng Tin Tuyển Dụng';
+      document.getElementById('postJobBtn').textContent = job ? '💾 Lưu thay đổi' : '➕ Đăng tuyển dụng';
+      document.getElementById('j_tieu_de').value = job?.tieu_de || '';
+      document.getElementById('j_loai_hinh').value = job?.loai_hinh || 'toan_thoi_gian';
+      document.getElementById('j_dia_chi').value = job?.dia_chi || '';
+      document.getElementById('j_luong_min').value = job?.muc_luong_min || '';
+      document.getElementById('j_luong_max').value = job?.muc_luong_max || '';
+      document.getElementById('j_han_nop').value = job?.han_nop ? job.han_nop.split('T')[0] : '';
+      document.getElementById('j_mo_ta').value = job?.mo_ta || '';
+      document.getElementById('j_yeu_cau').value = job?.yeu_cau || '';
+      document.getElementById('j_quyen_loi').value = job?.quyen_loi || '';
+      document.getElementById('j_edit_id').value = job?.id || '';
+      // Load kỹ năng hiện tại của job
+      selectedSkills = (job?.ky_nang || []).map(s => ({ ky_nang_id: s.id, ten_ky_nang: s.ten_ky_nang, muc_do: s.muc_do_yeu_cau }));
+      renderSkillTags();
+      document.getElementById('postJobModal').style.display = 'flex';
+    }
+
+    function closePostJobModal() {
+      document.getElementById('postJobModal').style.display = 'none';
+      document.getElementById('postJobForm').reset();
+      selectedSkills = [];
+      jobSkillSelectedId = null;
+      renderSkillTags();
+      editingJobId = null;
+    }
+
+    async function submitJob(e) {
+      e.preventDefault();
+      const btn = document.getElementById('postJobBtn');
+      btn.disabled = true; btn.textContent = 'Đang lưu...';
+      const payload = {
+        tieu_de: document.getElementById('j_tieu_de').value,
+        loai_hinh: document.getElementById('j_loai_hinh').value,
+        dia_chi: document.getElementById('j_dia_chi').value,
+        muc_luong_min: parseInt(document.getElementById('j_luong_min').value) || 0,
+        muc_luong_max: parseInt(document.getElementById('j_luong_max').value) || 0,
+        han_nop: document.getElementById('j_han_nop').value || null,
+        mo_ta: document.getElementById('j_mo_ta').value,
+        yeu_cau: document.getElementById('j_yeu_cau').value,
+        quyen_loi: document.getElementById('j_quyen_loi').value,
+        ky_nang: selectedSkills.filter(s => typeof s.ky_nang_id === 'number').map(s => ({ ky_nang_id: s.ky_nang_id, muc_do: s.muc_do })),
+      };
+      try {
+        if (editingJobId) {
+          await API.jobs.update(editingJobId, payload);
+          showToast('Cập nhật tin tuyển dụng thành công!', 'success');
+        } else {
+          await API.jobs.create(payload);
+          showToast('Đăng tin tuyển dụng thành công!', 'success');
+        }
+        closePostJobModal();
+        loadJobs();
+      } catch(err) {
+        showToast(err.message || 'Lưu thất bại.', 'error');
+        btn.disabled = false;
+        btn.textContent = editingJobId ? '💾 Lưu thay đổi' : '➕ Đăng tuyển dụng';
+      }
+    }
+
+    async function editJob(id) {
+      try {
+        const data = await API.jobs.getById(id);
+        openPostJobModal(data.job);
+      } catch(e) { showToast('Không tải được thông tin.', 'error'); }
+    }
+
+    async function deleteJob(id, btn) {
+      if (!confirm('Bạn có chắc muốn xóa tin này?')) return;
+      btn.disabled = true;
+      try {
+        await API.jobs.delete(id);
+        showToast('Đã xóa tin tuyển dụng.', 'success');
+        loadJobs();
+      } catch(e) { showToast('Xóa thất bại.', 'error'); btn.disabled = false; }
+    }
+
+    async function toggleStatus(id, currentStatus, btn) {
+      const newStatus = currentStatus === 'dang_tuyen' ? 'da_dong' : 'dang_tuyen';
+      btn.disabled = true;
+      try {
+        await API.jobs.update(id, { trang_thai: newStatus });
+        showToast(newStatus === 'da_dong' ? 'Đã đóng tin tuyển dụng.' : 'Đã mở lại tin tuyển dụng.', 'success');
+        loadJobs();
+      } catch(e) { showToast('Cập nhật thất bại.', 'error'); btn.disabled = false; }
+    }
+
+    async function showSuggestedCandidates(jobId, jobTitle) {
+      document.getElementById('suggestModalTitle').textContent = `✨ Ứng viên phù hợp: ${jobTitle}`;
+      document.getElementById('suggestModal').style.display = 'flex';
+      document.getElementById('suggestModalBody').innerHTML = '<div class="text-center" style="padding:40px"><div class="loading-spinner" style="margin:0 auto"></div></div>';
+      try {
+        const data = await API.recommend.getCandidates(jobId);
+        const candidates = data.candidates;
+        if (!candidates.length) {
+          document.getElementById('suggestModalBody').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-slate-500)"><div style="font-size:40px;margin-bottom:12px">🔍</div><div>Chưa có ứng viên phù hợp</div></div>';
+          return;
+        }
+        document.getElementById('suggestModalBody').innerHTML = `
+          <p style="font-size:13px;color:var(--text-slate-500);margin-bottom:16px">Tìm thấy <strong>${candidates.length}</strong> ứng viên phù hợp</p>
+          ${candidates.map(c => `
+            <div style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px">
+              <div style="width:40px;height:40px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0">${getInitials(c.ten)}</div>
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:14px">${c.ten}</div>
+                <div style="font-size:12px;color:var(--text-slate-500)">${c.email}</div>
+              </div>
+              <div style="background:rgba(99,102,241,0.1);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:700;color:var(--primary-light)">${c.diem_phu_hop}%</div>
+            </div>`).join('')}`;
+      } catch(e) { document.getElementById('suggestModalBody').innerHTML = '<p style="color:var(--text-slate-500);padding:20px">Không tải được dữ liệu.</p>'; }
+    }
+
+    let allSkills = [];
+    let selectedSkills = [];
+    let jobSkillSelectedId = null;
+
+    async function loadAllSkills() {
+      try {
+        const data = await API.users.getAllSkills();
+        allSkills = data.skills || [];
+      } catch(e) {}
+    }
+
+    function searchJobSkill(q) {
+      const dd = document.getElementById('j_skill_dropdown');
+      if (!q) { dd.style.display = 'none'; return; }
+      const filtered = allSkills.filter(s =>
+        s.ten_ky_nang.toLowerCase().includes(q.toLowerCase()) &&
+        !selectedSkills.find(js => js.ky_nang_id === s.id)
+      ).slice(0, 8);
+      if (!filtered.length) { dd.style.display = 'none'; return; }
+      dd.style.display = 'block';
+      dd.innerHTML = filtered.map(s =>
+        `<div onclick="pickJobSkill(${s.id},'${s.ten_ky_nang.replace(/'/g,"\\'")}') " style="padding:10px 14px;cursor:pointer;font-size:13px;transition:background 0.1s" onmouseover="this.style.background='rgba(99,102,241,0.08)'" onmouseout="this.style.background=''">${s.ten_ky_nang}</div>`
+      ).join('');
+    }
+
+    function pickJobSkill(id, name) {
+      jobSkillSelectedId = id;
+      document.getElementById('j_skill_input').value = name;
+      document.getElementById('j_skill_dropdown').style.display = 'none';
+    }
+
+    function addJobSkill() {
+      const name = document.getElementById('j_skill_input').value.trim();
+      const level = parseInt(document.getElementById('j_skill_level').value);
+      if (!name) { showToast('Vui lòng nhập tên kỹ năng.', 'warning'); return; }
+      // Nếu chọn từ dropdown dùng id, nếu tự nhập thì dùng tên làm key tạm
+      const id = jobSkillSelectedId || ('custom_' + name.toLowerCase());
+      if (selectedSkills.find(s => s.ky_nang_id === id)) { showToast('Kỹ năng này đã được thêm.', 'warning'); return; }
+      selectedSkills.push({ ky_nang_id: id, ten_ky_nang: name, muc_do: level });
+      document.getElementById('j_skill_input').value = '';
+      jobSkillSelectedId = null;
+      renderSkillTags();
+    }
+
+    function removeSkill(id) {
+      selectedSkills = selectedSkills.filter(s => s.ky_nang_id !== id);
+      renderSkillTags();
+    }
+
+    const levelLabels = ['','Cơ bản','Trung bình','Thành thạo','Chuyên sâu','Chuyên gia'];
+
+    function renderSkillTags() {
+      const list = document.getElementById('j_skills_list');
+      if (!selectedSkills.length) {
+        list.innerHTML = '<div id="j_no_skill_msg" style="font-size:13px;color:#94a3b8">Chưa có kỹ năng nào. Thêm kỹ năng để AI gợi ý ứng viên phù hợp.</div>';
+        return;
+      }
+      list.innerHTML = selectedSkills.map(s => `
+        <div style="display:flex;align-items:center;gap:10px;background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:8px 12px">
+          <span style="flex:1;font-size:13px;font-weight:600">${s.ten_ky_nang}</span>
+          <span style="font-size:12px;color:#6366f1;background:rgba(99,102,241,0.15);border-radius:6px;padding:2px 8px">Lv.${s.muc_do} ${levelLabels[s.muc_do]||''}</span>
+          <button type="button" onclick="removeSkill('${s.ky_nang_id}')" style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:16px;padding:0;line-height:1">×</button>
+        </div>`).join('');
+    }
+
+    // Đóng dropdown khi click ngoài
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#j_skill_input') && !e.target.closest('#j_skill_dropdown')) {
+        const dd = document.getElementById('j_skill_dropdown');
+        if (dd) dd.style.display = 'none';
+      }
+    });
+
+    loadJobs();
+    loadAllSkills();
+  </script>
+</body>
+</html>

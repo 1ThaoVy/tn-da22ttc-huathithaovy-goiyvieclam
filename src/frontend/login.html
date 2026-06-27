@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng Nhập — SmartJob</title>
+  <meta name="description" content="Đăng nhập vào Tuyển Dụng để nhận gợi ý việc làm thông minh.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/tailwind-config.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body style="min-height:100vh;display:flex;flex-direction:column">
+  <nav class="navbar" id="navbar"></nav>
+
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:100px 20px 40px;position:relative;overflow:hidden">
+    <!-- Background decorations -->
+    <div style="position:absolute;top:-100px;left:-100px;width:400px;height:400px;background:radial-gradient(circle,rgba(99,102,241,0.12),transparent 70%);border-radius:50%;pointer-events:none"></div>
+    <div style="position:absolute;bottom:-100px;right:-100px;width:400px;height:400px;background:radial-gradient(circle,rgba(139,92,246,0.1),transparent 70%);border-radius:50%;pointer-events:none"></div>
+
+    <div style="width:100%;max-width:440px;position:relative;z-index:1">
+      <!-- Logo -->
+      <div class="text-center mb-8">
+        <a href="/index.html" class="navbar-brand" style="display:inline-flex;margin-bottom:24px;align-items:center;gap:12px">
+          <img src="/images/logo.png" alt="SmartJob Logo" style="width:48px;height:48px;object-fit:contain;">
+          <span class="text-primary" style="font-size:28px;font-weight:800;letter-spacing:-0.5px">SmartJob</span>
+        </a>
+        <h1 style="font-size:24px;margin-bottom:8px">Chào mừng trở lại! 👋</h1>
+        <p class="text-slate-500 text-[13px]">Đăng nhập để nhận gợi ý việc làm cá nhân hóa</p>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg animate-fadeInUp">
+        <div class="p-6">
+          <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="mb-5">
+              <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" for="email">Địa chỉ Email</label>
+              <div class="relative">
+                <span class="input-icon">✉️</span>
+                <input type="email" id="email" name="email" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" placeholder="email@example.com" required autocomplete="email">
+              </div>
+            </div>
+
+            <div class="mb-5" style="position:relative">
+              <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide" for="password">Mật khẩu</label>
+              <div class="relative" style="position:relative">
+                <span class="input-icon">🔒</span>
+                <input type="password" id="password" name="password" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" placeholder="Nhập mật khẩu" required autocomplete="current-password">
+                <button type="button" class="pass-toggle" onclick="togglePassword('password')">👁️</button>
+              </div>
+            </div>
+
+            <div id="loginError" class="badge bg-red-500/15 text-red-500 border border-red-500/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium mt-8 mb-8" style="display:none;width:100%;justify-content:flex-start;padding:10px 14px;border-radius:8px;font-size:13px"></div>
+
+            <button type="submit" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap w-full !flex !px-7 !py-3.5 !text-base mt-8" id="loginBtn">
+              <span>Đăng Nhập</span>
+            </button>
+          </form>
+
+
+        </div>
+
+        <div class="px-6 py-4 border-t border-slate-200 text-center">
+          <span class="text-slate-500 text-[13px]">Chưa có tài khoản? </span>
+          <a href="/register.html" style="color:var(--primary-light);font-weight:600;font-size:14px">Đăng ký ngay →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+  <script src="/js/api.js"></script>
+  <script>
+    // Redirect nếu đã login
+    if (isLoggedIn()) {
+      const u = getUser();
+      window.location.href = (u && u.vai_tro === 'admin') ? '/admin/dashboard.html' : (u && u.vai_tro === 'nha_tuyen_dung') ? '/recruiter-jobs.html' : '/index.html';
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('loginBtn');
+      const errEl = document.getElementById('loginError');
+      errEl.style.display = 'none';
+
+      const email = document.getElementById('email').value;
+      const mat_khau = document.getElementById('password').value;
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading-spinner" style="width:18px;height:18px;border-width:2px"></span> Đang đăng nhập...';
+
+      try {
+        const data = await API.auth.login({ email, mat_khau });
+        saveAuth(data.token, data.user);
+        showToast(`Chào mừng ${data.user.ten}! `, 'success');
+        setTimeout(() => {
+          const redirect = new URLSearchParams(window.location.search).get('redirect');
+          window.location.href = redirect || (data.user.vai_tro === 'ung_vien' ? '/recommend.html' : data.user.vai_tro === 'nha_tuyen_dung' ? '/recruiter-jobs.html' : '/admin/dashboard.html');
+        }, 800);
+      } catch (err) {
+        errEl.textContent = err.message || 'Đăng nhập thất bại.';
+        errEl.style.display = 'flex';
+        btn.disabled = false;
+        btn.innerHTML = '<span>Đăng Nhập</span>';
+      }
+    }
+
+    function togglePassword(id) {
+      const el = document.getElementById(id);
+      el.type = el.type === 'password' ? 'text' : 'password';
+    }
+
+    function fillDemo(email, pass) {
+      document.getElementById('email').value = email;
+      document.getElementById('password').value = pass;
+    }
+  </script>
+</body>
+</html>

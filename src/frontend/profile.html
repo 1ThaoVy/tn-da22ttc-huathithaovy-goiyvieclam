@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ Sơ Cá Nhân — SmartJob</title>
+  <meta name="description" content="Quản lý hồ sơ và kỹ năng của bạn trên Tuyển Dụng.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/tailwind-config.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+</head>
+<body>
+  <nav class="navbar" id="navbar"></nav>
+  <div class="page-wrapper">
+    <div class="max-w-7xl mx-auto px-5 py-[60px]" style="padding-top:32px">
+
+      <div style="display:grid;grid-template-columns:300px 1fr;gap:28px;align-items:start">
+        <!-- Left: Avatar & Quick Info -->
+        <div>
+          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg mb-6" style="text-align:center;padding:32px 24px">
+            <div style="position:relative;display:inline-block;margin:0 auto 16px">
+              <div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center font-bold text-[18px] text-white shrink-0 !w-[100px] !h-[100px] !text-[36px]" id="avatarEl" style="margin:0;overflow:hidden">?</div>
+              <button onclick="document.getElementById('avatarInput').click()" title="Đổi ảnh đại diện"
+                style="position:absolute;bottom:0;right:0;width:30px;height:30px;border-radius:50%;background:var(--primary);border:2px solid white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:white">✏️</button>
+              <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleAvatarChange(event)">
+            </div>
+            <h2 id="profileName" style="font-size:20px;margin-bottom:4px">...</h2>
+            <div id="profileRole" class="badge bg-primary/15 text-primary-light border border-primary/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium" style="margin:0 auto 12px;display:inline-flex"></div>
+            <div id="profileEmail" class="text-slate-500 text-[13px] mb-8"></div>
+            <div id="profilePhone" class="text-slate-500 text-[13px] mb-8"></div>
+            <div id="profileAddress" class="text-slate-500 text-[13px]"></div>
+          </div>
+
+          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg mb-6">
+            <div class="p-6" style="padding:18px">
+              <div class="font-bold mb-8" style="font-size:13px;color:var(--text-slate-500);text-transform:uppercase;letter-spacing:0.5px">Điều hướng nhanh</div>
+              <div id="quickLinks" style="display:flex;flex-direction:column;gap:4px">
+                <a href="/recommend.html" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap w-full !flex" style="justify-content:flex-start"> Gợi ý việc làm AI</a>
+                <a href="/my-applications.html" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-black/5 text-slate-500 border border-slate-200 text-[13px] font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:text-primary cursor-pointer whitespace-nowrap w-full !flex" style="justify-content:flex-start"> Đơn ứng tuyển</a>
+                <a href="/jobs.html" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-black/5 text-slate-500 border border-slate-200 text-[13px] font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:text-primary cursor-pointer whitespace-nowrap w-full !flex" style="justify-content:flex-start"> Tìm việc</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Stats mini -->
+          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg" id="statsCard">
+            <div class="p-6" style="padding:18px">
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500 text-[13px]">Kỹ năng</span>
+                  <span id="skillCount" class="font-bold">0</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500 text-[13px]">Ứng tuyển</span>
+                  <span id="applyCount" class="font-bold">0</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-500 text-[13px]">Đã lưu</span>
+                  <span id="savedCount" class="font-bold">0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Edit Forms -->
+        <div>
+          <div class="tabs mb-0" style="margin-bottom:0">
+            <button class="tab-btn active" id="tab_btn_info" onclick="switchProfileTab('info')">👤 Thông tin cá nhân</button>
+            <button class="tab-btn" id="tab_btn_skills" onclick="switchProfileTab('skills')"> Kỹ năng</button>
+            <button class="tab-btn" id="tab_btn_hoso" onclick="switchProfileTab('hoso')">📄 Hồ sơ chi tiết</button>
+            <button class="tab-btn" id="tab_btn_company" onclick="switchProfileTab('company')" style="display:none">🏢 Thông tin công ty</button>
+            <button class="tab-btn" id="tab_btn_myJobs" onclick="switchProfileTab('myJobs')" style="display:none">💼 Tin tuyển dụng</button>
+            <button class="tab-btn" id="tab_btn_applications" onclick="switchProfileTab('applications')" style="display:none">📄 Hồ sơ ứng tuyển</button>
+          </div>
+
+          <!-- Tab: Thông tin -->
+          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg" id="panel_info" style="border-top-left-radius:0">
+            <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
+              <h3 style="font-size:16px">Thông Tin Cá Nhân</h3>
+              <span class="badge bg-black/5 text-slate-500 border border-slate-200 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium text-[13px]">Tự động lưu</span>
+            </div>
+            <div class="p-6">
+              <form id="infoForm" onsubmit="saveInfo(event)">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                  <div class="mb-5">
+                    <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Họ và tên *</label>
+                    <input type="text" id="f_ten" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" placeholder="Nguyễn Văn A" required>
+                  </div>
+                  <div class="mb-5">
+                    <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Số điện thoại</label>
+                    <input type="tel" id="f_phone" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" placeholder="0901234567">
+                  </div>
+                </div>
+                <div class="mb-5">
+                  <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Email</label>
+                  <input type="email" id="f_email" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" disabled style="opacity:0.6;cursor:not-allowed">
+                  <div class="text-slate-500 text-[13px] mt-8">Email không thể thay đổi</div>
+                </div>
+                <div class="mb-5">
+                  <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Địa chỉ</label>
+                  <input type="text" id="f_address" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" placeholder="Hà Nội, Việt Nam">
+                </div>
+                <button type="submit" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap" id="saveInfoBtn">💾 Lưu thông tin</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Tab: Thông tin công ty (recruiter) -->
+          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg" id="panel_company" style="display:none;border-top-left-radius:0">
+            <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
+              <h3 style="font-size:16px">🏢 Thông Tin Công Ty</h3>
+              <span class="badge bg-black/5 text-slate-500 border border-slate-200 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium">Tự động lưu</span>
+            </div>
+            <div class="p-6">
+              <form id="companyForm" onsubmit="saveCompany(event)">
+                <div class="mb-5">
+                  <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Tên công ty *</label>
+                  <input type="text" id="c_ten" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" placeholder="VD: TechCorp Vietnam" required>
+                </div>
+                <div class="mb-5">
+                  <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Mô tả công ty</label>
+                  <textarea id="c_mota" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" rows="4" placeholder="Giới thiệu về công ty, lĩnh vực hoạt động, văn hóa doanh nghiệp..."></textarea>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                  <div class="mb-5">
+                    <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Website</label>
+                    <input type="text" id="c_website" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" placeholder="company.vn">
+                  </div>
+                  <div class="mb-5">
+                    <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Quy mô nhân sự</label>
+                    <select id="c_quymo" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none">
+                      <option value="">-- Chọn quy mô --</option>
+                      <option value="1-10 nhân viên">1 - 10 nhân viên</option>
+                      <option value="10-50 nhân viên">10 - 50 nhân viên</option>
+                      <option value="50-100 nhân viên">50 - 100 nhân viên</option>
+                      <option value="100-200 nhân viên">100 - 200 nhân viên</option>
+                      <option value="200-500 nhân viên">200 - 500 nhân viên</option>
+                      <option value="500-1000 nhân viên">500 - 1000 nhân viên</option>
+                      <option value="Trên 1000 nhân viên">Trên 1000 nhân viên</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="mb-5">
+                  <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Địa chỉ công ty</label>
+                  <input type="text" id="c_diachi" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" placeholder="123 Nguyễn Huệ, Quận 1, TP.HCM">
+                </div>
+                <button type="submit" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap" id="saveCompanyBtn">💾 Lưu thông tin công ty</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Tab: Kỹ năng -->
+          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg" id="panel_skills" style="display:none;border-top-left-radius:0">
+            <div class="px-6 py-5 border-b border-slate-200">
+              <h3 style="font-size:16px;margin-bottom:4px">Quản Lý Kỹ Năng </h3>
+              <p class="text-slate-500 text-[13px]">Thêm kỹ năng để nhận gợi ý việc làm chính xác hơn</p>
+            </div>
+            <div class="p-6">
+              <!-- Add skill form -->
+              <div style="background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);border-radius:var(--radius-md);padding:20px;margin-bottom:24px">
+                <div class="font-bold mb-6" style="font-size:14px">➕ Thêm kỹ năng mới</div>
+                <div style="display:grid;grid-template-columns:1fr 160px auto;gap:12px;align-items:end">
+                  <div>
+                    <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Tên kỹ năng</label>
+                    <input type="text" id="skillSearchInput" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" placeholder="Tìm hoặc nhập kỹ năng..." autocomplete="off" oninput="filterSkills(this.value)">
+                    <div id="skillDropdown" style="display:none;position:absolute;z-index:50;background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);max-height:200px;overflow-y:auto;width:300px;box-shadow:var(--shadow-lg);margin-top:4px"></div>
+                  </div>
+                  <div>
+                    <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Mức độ (1-5)</label>
+                    <select id="skillLevel" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none">
+                      <option value="1">⭐ 1 - Mới biết</option>
+                      <option value="2">⭐⭐ 2 - Cơ bản</option>
+                      <option value="3" selected>⭐⭐⭐ 3 - Trung bình</option>
+                      <option value="4">⭐⭐⭐⭐ 4 - Thành thạo</option>
+                      <option value="5">⭐⭐⭐⭐⭐ 5 - Chuyên gia</option>
+                    </select>
+                  </div>
+                  <button class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap" onclick="addSkill()" style="margin-bottom:0">Thêm</button>
+                </div>
+              </div>
+
+              <!-- Current skills -->
+              <div class="font-bold mb-6" style="font-size:14px">📊 Kỹ năng hiện tại</div>
+              <div id="skillsContainer">
+                <div class="text-center" style="padding:40px 0">
+                  <div class="loading-spinner" style="margin:0 auto"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab: Hồ sơ chi tiết -->
+          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-lg" id="panel_hoso" style="display:none;border-top-left-radius:0">
+            <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
+              <h3 style="font-size:16px">Hồ Sơ Chi Tiết 📄</h3>
+              <button onclick="exportToWord()" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-black/5 text-slate-500 border border-slate-200 text-[13px] font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:text-primary cursor-pointer whitespace-nowrap" style="gap:6px">
+                📝 Xuất Word
+              </button>
+            </div>
+            <div class="p-6">
+              <form id="hosoForm" onsubmit="saveHoSo(event)">
+                <div class="mb-5">
+                  <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Giới thiệu bản thân</label>
+                  <textarea id="f_moTa" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" rows="4" placeholder="Mô tả ngắn về bản thân, mục tiêu nghề nghiệp..."></textarea>
+                </div>
+                <div class="mb-5">
+                  <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Kinh nghiệm làm việc</label>
+                  <textarea id="f_kinhNghiem" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" rows="5" placeholder="Mô tả kinh nghiệm làm việc của bạn..."></textarea>
+                </div>
+                <div class="mb-5">
+                  <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Học vấn</label>
+                  <textarea id="f_hocVan" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" rows="3" placeholder="Trường học, chuyên ngành, năm tốt nghiệp..."></textarea>
+                </div>
+                <div class="mb-5">
+                  <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">GitHub</label>
+                  <input type="text" id="f_github" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" placeholder="github.com/username">
+                </div>
+
+                <!-- Sở thích tìm việc (dùng cho AI gợi ý) -->
+                <div style="background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:16px;margin-bottom:20px">
+                  <div style="font-size:13px;font-weight:700;margin-bottom:12px"> Sở Thích Tìm Việc <span style="font-size:11px;font-weight:400;color:var(--text-slate-500)">(AI dùng để lọc gợi ý phù hợp hơn)</span></div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <div>
+                      <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Loại hình mong muốn</label>
+                      <select id="f_loaiHinh" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none">
+                        <option value="">Tất cả loại hình</option>
+                        <option value="toan_thoi_gian">Toàn thời gian</option>
+                        <option value="ban_thoi_gian">Bán thời gian</option>
+                        <option value="tu_do">Tự do (Freelance)</option>
+                        <option value="thuc_tap">Thực tập</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Địa điểm làm việc</label>
+                      <select id="f_diaChiMongMuon" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none">
+                        <option value="">Tất cả địa điểm</option>
+                        <option value="Hà Nội">Hà Nội</option>
+                        <option value="TP.HCM">TP.HCM</option>
+                        <option value="Đà Nẵng">Đà Nẵng</option>
+                        <option value="Cần Thơ">Cần Thơ</option>
+                        <option value="Hải Phòng">Hải Phòng</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="text-slate-500 text-[13px]" style="margin-top:8px;font-size:12px"> AI sẽ chỉ gợi ý việc làm khớp với loại hình và địa điểm bạn chọn.</div>
+                </div>
+
+                <button type="submit" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap" id="saveHoSoBtn">💾 Lưu hồ sơ</button>
+              </form>
+            </div>
+          </div>
+          <!-- Tab: Tin tuyển dụng (recruiter) -->
+          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden" id="panel_myJobs" style="display:none;border-top-left-radius:0">
+            <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
+              <h3 style="font-size:16px">💼 Tin Tuyển Dụng Của Tôi</h3>
+              <button onclick="openPostJobModal()" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap">➕ Đăng tin mới</button>
+            </div>
+            <div class="p-6" id="myJobsContainer">
+              <div class="text-center" style="padding:40px"><div class="loading-spinner" style="margin:0 auto"></div></div>
+            </div>
+          </div>
+
+          <!-- Tab: Hồ sơ ứng tuyển (recruiter) -->
+          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden" id="panel_applications" style="display:none;border-top-left-radius:0">
+            <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
+              <h3 style="font-size:16px">📄 Hồ Sơ Ứng Tuyển</h3>
+              <select id="filterAppJob" class="px-3 py-2 bg-white border border-slate-200 rounded-lg text-[13px] outline-none" onchange="loadRecruiterApplications()">
+                <option value="">Tất cả tin</option>
+              </select>
+            </div>
+            <div class="p-6" id="recruiterAppsContainer">
+              <div class="text-center" style="padding:40px"><div class="loading-spinner" style="margin:0 auto"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal đăng/sửa tin tuyển dụng -->
+  <div id="postJobModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;overflow-y:auto;padding:20px">
+    <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:640px;margin:auto;position:relative">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <h3 id="postJobModalTitle" style="font-size:18px;font-weight:700">➕ Đăng Tin Tuyển Dụng</h3>
+        <button onclick="closePostJobModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-slate-500)">✕</button>
+      </div>
+      <form id="postJobForm" onsubmit="submitJob(event)">
+        <div class="mb-5">
+          <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Tiêu đề công việc *</label>
+          <input type="text" id="j_tieu_de" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] outline-none" placeholder="VD: Senior ReactJS Developer" required>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="mb-5">
+            <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Loại hình</label>
+            <select id="j_loai_hinh" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] outline-none">
+              <option value="toan_thoi_gian">Toàn thời gian</option>
+              <option value="ban_thoi_gian">Bán thời gian</option>
+              <option value="tu_do">Tự do</option>
+              <option value="thuc_tap">Thực tập</option>
+            </select>
+          </div>
+          <div class="mb-5">
+            <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Địa điểm</label>
+            <input type="text" id="j_dia_chi" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] outline-none" placeholder="Hà Nội">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="mb-5">
+            <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Lương tối thiểu (VNĐ)</label>
+            <input type="number" id="j_luong_min" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] outline-none" placeholder="10000000" min="0">
+          </div>
+          <div class="mb-5">
+            <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Lương tối đa (VNĐ)</label>
+            <input type="number" id="j_luong_max" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] outline-none" placeholder="20000000" min="0">
+          </div>
+        </div>
+        <div class="mb-5">
+          <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Hạn nộp hồ sơ</label>
+          <input type="date" id="j_han_nop" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] outline-none">
+        </div>
+        <div class="mb-5">
+          <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Mô tả công việc *</label>
+          <textarea id="j_mo_ta" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] outline-none" rows="4" placeholder="Mô tả chi tiết về vị trí, nhiệm vụ..." required></textarea>
+        </div>
+        <div class="mb-5">
+          <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Yêu cầu ứng viên</label>
+          <textarea id="j_yeu_cau" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] outline-none" rows="3" placeholder="Bằng cấp, kinh nghiệm, kỹ năng..."></textarea>
+        </div>
+        <div class="mb-5">
+          <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Quyền lợi</label>
+          <textarea id="j_quyen_loi" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] outline-none" rows="3" placeholder="Lương thưởng, bảo hiểm, đào tạo..."></textarea>
+        </div>
+        <div class="mb-5">
+          <label class="block text-[13px] font-semibold text-slate-500 mb-2 uppercase tracking-wide">Kỹ năng yêu cầu</label>
+          <div style="display:grid;grid-template-columns:1fr 140px auto;gap:8px;align-items:end;margin-bottom:10px">
+            <div style="position:relative">
+              <input type="text" id="j_skill_input" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] outline-none" placeholder="Tìm kỹ năng..." autocomplete="off" oninput="searchJobSkill(this.value)">
+              <div id="j_skill_dropdown" style="display:none;position:absolute;z-index:200;background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;width:100%;max-height:180px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.12);margin-top:4px"></div>
+            </div>
+            <select id="j_skill_level" class="w-full px-3 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] outline-none">
+              <option value="1">1 - Cơ bản</option>
+              <option value="2" selected>2 - Trung bình</option>
+              <option value="3">3 - Thành thạo</option>
+              <option value="4">4 - Chuyên sâu</option>
+              <option value="5">5 - Chuyên gia</option>
+            </select>
+            <button type="button" onclick="addJobSkill()" style="background:var(--primary);color:white;border:none;border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">+ Thêm</button>
+          </div>
+          <div id="j_skills_list" style="display:flex;flex-direction:column;gap:6px">
+            <div id="j_no_skill_msg" style="font-size:13px;color:var(--text-slate-500)">Chưa có kỹ năng nào. Thêm kỹ năng để AI gợi ý ứng viên phù hợp.</div>
+          </div>
+        </div>
+        <input type="hidden" id="j_edit_id">
+        <div style="display:flex;gap:12px;margin-top:8px">
+          <button type="button" onclick="closePostJobModal()" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-black/5 text-slate-500 border border-slate-200 text-[13px] font-semibold rounded-lg transition-all hover:-translate-y-0.5 cursor-pointer whitespace-nowrap" style="flex:1">Hủy</button>
+          <button type="submit" id="postJobBtn" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap" style="flex:2">➕ Đăng tuyển dụng</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal xem ứng viên phù hợp -->
+  <div id="suggestModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:660px;margin:auto;max-height:85vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <h3 id="suggestModalTitle" style="font-size:16px;font-weight:700">✨ Ứng viên phù hợp</h3>
+        <button onclick="closeSuggestModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-slate-500)">✕</button>
+      </div>
+      <div id="suggestModalBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal xem chi tiết ứng viên -->
+  <div id="candidateModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1100;align-items:center;justify-content:center;padding:20px">
+    <div style="background:var(--bg-surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:100%;max-width:580px;margin:auto;max-height:85vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <h3 id="candidateModalTitle" style="font-size:16px;font-weight:700">👤 Thông tin ứng viên</h3>
+        <button onclick="closeCandidateModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-slate-500)">✕</button>
+      </div>
+      <div id="candidateModalBody"></div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+  <script src="/js/api.js"></script>
+  <script>
+    if (!requireAuth()) {}
+    const _u = getUser();
+    if (_u && _u.vai_tro === 'admin') window.location.href = '/admin/dashboard.html';
+
+    let allSkills = [];
+    let userSkills = [];
+    let selectedSkillId = null;
+
+    const roleLabels = { ung_vien: 'Ứng viên', nha_tuyen_dung: 'Nhà tuyển dụng', admin: 'Quản trị viên' };
+
+    async function loadProfile() {
+      try {
+        const data = await API.users.getProfile();
+        const u = data.user;
+        // Hiển thị avatar
+        const avatarEl = document.getElementById('avatarEl');
+        if (u.avatar) {
+          avatarEl.innerHTML = `<img src="${u.avatar}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+        } else {
+          avatarEl.textContent = getInitials(u.ten);
+        }
+        document.getElementById('profileName').textContent = u.ten;
+        document.getElementById('profileRole').textContent = roleLabels[u.vai_tro] || u.vai_tro;
+        document.getElementById('profileEmail').textContent = '✉️ ' + u.email;
+        document.getElementById('profilePhone').textContent = u.so_dien_thoai ? '📞 ' + u.so_dien_thoai : '';
+        document.getElementById('profileAddress').textContent = u.dia_chi ? ' ' + u.dia_chi : '';
+
+        document.getElementById('f_ten').value = u.ten || '';
+        document.getElementById('f_email').value = u.email || '';
+        document.getElementById('f_phone').value = u.so_dien_thoai || '';
+        document.getElementById('f_address').value = u.dia_chi || '';
+
+        if (u.ho_so) {
+          document.getElementById('f_moTa').value = u.ho_so.mo_ta_ban_than || '';
+          document.getElementById('f_kinhNghiem').value = u.ho_so.kinh_nghiem || '';
+          document.getElementById('f_hocVan').value = u.ho_so.hoc_van || '';
+          document.getElementById('f_github').value = u.ho_so.github || '';
+          document.getElementById('f_loaiHinh').value = u.ho_so.loai_hinh_mong_muon || '';
+          document.getElementById('f_diaChiMongMuon').value = u.ho_so.dia_chi_mong_muon || '';
+        }
+
+        // Adjust tabs and quick navigation for recruiter/admin
+        if (u.vai_tro !== 'ung_vien') {
+          const tabSkills = document.getElementById('tab_btn_skills');
+          const tabHoSo = document.getElementById('tab_btn_hoso');
+          const tabInfo = document.getElementById('tab_btn_info');
+          if (tabSkills) tabSkills.style.display = 'none';
+          if (tabHoSo) tabHoSo.style.display = 'none';
+          if (tabInfo) tabInfo.style.display = 'none';
+          document.getElementById('tab_btn_company').style.display = '';
+          document.getElementById('tab_btn_myJobs').style.display = '';
+          document.getElementById('tab_btn_applications').style.display = '';
+          const statsCard = document.getElementById('statsCard');
+          if (statsCard) statsCard.style.display = 'none';
+          // Đổi tab mặc định sang thông tin công ty
+          switchProfileTab('company');
+          loadCompanyInfo();
+
+          const quickLinksEl = document.getElementById('quickLinks');
+          if (quickLinksEl) {
+            quickLinksEl.innerHTML = `
+              <button onclick="openPostJobModal()" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap w-full !flex" style="justify-content:flex-start">➕ Đăng tin tuyển dụng</button>
+              <button onclick="switchProfileTab('myJobs')" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-black/5 text-slate-500 border border-slate-200 text-[13px] font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:text-primary cursor-pointer whitespace-nowrap w-full !flex" style="justify-content:flex-start">💼 Tin tuyển dụng của tôi</button>
+              <button onclick="switchProfileTab('applications')" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-black/5 text-slate-500 border border-slate-200 text-[13px] font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:text-primary cursor-pointer whitespace-nowrap w-full !flex" style="justify-content:flex-start">📄 Hồ sơ ứng tuyển</button>
+            `;
+          }
+        }
+      } catch(e) { showToast('Không tải được hồ sơ.', 'error'); }
+    }
+
+    async function loadSkills() {
+      try {
+        const [userRes, allRes] = await Promise.all([API.users.getSkills(), API.users.getAllSkills()]);
+        userSkills = userRes.skills;
+        allSkills = allRes.skills;
+        document.getElementById('skillCount').textContent = userSkills.length;
+        renderUserSkills();
+      } catch(e) { showToast('Không tải được kỹ năng.', 'error'); }
+    }
+
+    function renderUserSkills() {
+      const container = document.getElementById('skillsContainer');
+      if (!userSkills.length) {
+        container.innerHTML = `<div class="empty-state" style="padding:40px 20px">
+          <div class="empty-state-icon"></div>
+          <div class="empty-state-title">Chưa có kỹ năng nào</div>
+          <p class="empty-state-desc">Thêm kỹ năng để AI gợi ý việc phù hợp với bạn!</p>
+        </div>`;
+        return;
+      }
+
+      // Group by category
+      const groups = {};
+      userSkills.forEach(s => {
+        if (!groups[s.danh_muc]) groups[s.danh_muc] = [];
+        groups[s.danh_muc].push(s);
+      });
+
+      container.innerHTML = Object.entries(groups).map(([cat, skills]) => `
+        <div style="margin-bottom:20px">
+          <div class="text-slate-500 text-[13px] font-bold mb-8" style="text-transform:uppercase;letter-spacing:0.5px">${cat}</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            ${skills.map(s => `
+              <div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 16px">
+                <div style="flex:1">
+                  <div style="font-size:14px;font-weight:600;margin-bottom:6px">${s.ten_ky_nang}</div>
+                  <div class="match-score">
+                    <div class="match-score-bar" style="flex:1">
+                      <div class="match-score-fill" style="width:${s.muc_do * 20}%"></div>
+                    </div>
+                    <span class="text-slate-500 text-sm" style="min-width:80px">${getLevelLabel(s.muc_do)}</span>
+                  </div>
+                </div>
+                <button class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-red-500 text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:bg-red-600 cursor-pointer whitespace-nowrap !px-3 !py-1.5 !text-xs !rounded-md" onclick="removeSkill(${s.id})">✕</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function getLevelLabel(lv) {
+      return ['', '⭐ Mới biết', '⭐⭐ Cơ bản', '⭐⭐⭐ Trung bình', '⭐⭐⭐⭐ Thành thạo', '⭐⭐⭐⭐⭐ Chuyên gia'][lv] || '';
+    }
+
+    function filterSkills(q) {
+      const dd = document.getElementById('skillDropdown');
+      if (!q || q.length < 1) { dd.style.display = 'none'; selectedSkillId = null; return; }
+
+      const filtered = allSkills.filter(s =>
+        s.ten_ky_nang.toLowerCase().includes(q.toLowerCase()) &&
+        !userSkills.find(us => us.id === s.id)
+      ).slice(0, 8);
+
+      if (filtered.length === 0 && q.length >= 2) {
+        dd.style.display = 'block';
+        dd.innerHTML = `<div style="padding:10px 14px;cursor:pointer;color:var(--primary-light);font-size:13px" onclick="selectNewSkill('${q}')">➕ Thêm kỹ năng mới: "<strong>${q}</strong>"</div>`;
+        return;
+      }
+
+      dd.style.display = filtered.length ? 'block' : 'none';
+      dd.innerHTML = filtered.map(s => `
+        <div style="padding:10px 14px;cursor:pointer;transition:0.15s;font-size:13px" onmouseenter="this.style.background='rgba(99,102,241,0.1)'" onmouseleave="this.style.background=''" onmousedown="selectSkill(${s.id},'${s.ten_ky_nang}')">
+          <span class="font-bold">${s.ten_ky_nang}</span> <span class="text-slate-500 text-[13px]">${s.danh_muc}</span>
+        </div>
+      `).join('');
+    }
+
+    function selectSkill(id, name) {
+      selectedSkillId = id;
+      document.getElementById('skillSearchInput').value = name;
+      document.getElementById('skillDropdown').style.display = 'none';
+    }
+
+    function selectNewSkill(name) {
+      selectedSkillId = null;
+      document.getElementById('skillSearchInput').value = name;
+      document.getElementById('skillDropdown').style.display = 'none';
+    }
+
+    async function addSkill() {
+      const name = document.getElementById('skillSearchInput').value.trim();
+      const level = parseInt(document.getElementById('skillLevel').value);
+      if (!name) { showToast('Vui lòng nhập tên kỹ năng.', 'warning'); return; }
+
+      try {
+        const payload = selectedSkillId
+          ? { ky_nang_id: selectedSkillId, muc_do: level }
+          : { ten_ky_nang: name, muc_do: level };
+        const data = await API.users.addSkill(payload);
+        userSkills.push({ ...data.skill });
+        renderUserSkills();
+        document.getElementById('skillSearchInput').value = '';
+        document.getElementById('skillCount').textContent = userSkills.length;
+        selectedSkillId = null;
+        showToast(`Đã thêm kỹ năng "${name}"! `, 'success');
+      } catch(e) { showToast(e.message || 'Không thêm được kỹ năng.', 'error'); }
+    }
+
+    async function removeSkill(skillId) {
+      try {
+        await API.users.removeSkill(skillId);
+        userSkills = userSkills.filter(s => s.id !== skillId);
+        renderUserSkills();
+        document.getElementById('skillCount').textContent = userSkills.length;
+        showToast('Đã xóa kỹ năng.', 'info');
+      } catch(e) { showToast('Không xóa được kỹ năng.', 'error'); }
+    }
+
+    async function saveInfo(e) {
+      e.preventDefault();
+      const btn = document.getElementById('saveInfoBtn');
+      btn.disabled = true; btn.textContent = 'Đang lưu...';
+      try {
+        await API.users.updateProfile({
+          ten: document.getElementById('f_ten').value,
+          so_dien_thoai: document.getElementById('f_phone').value,
+          dia_chi: document.getElementById('f_address').value,
+        });
+        showToast('Cập nhật thông tin thành công! ', 'success');
+        // Update navbar user name
+        const user = getUser();
+        if (user) { user.ten = document.getElementById('f_ten').value; saveAuth(localStorage.getItem('token'), user); }
+        document.getElementById('profileName').textContent = document.getElementById('f_ten').value;
+        const avatarEl = document.getElementById('avatarEl');
+        if (!avatarEl.querySelector('img')) {
+          avatarEl.textContent = getInitials(document.getElementById('f_ten').value);
+        }
+      } catch(e) { showToast(e.message || 'Lưu thất bại.', 'error'); }
+      btn.disabled = false; btn.textContent = '💾 Lưu thông tin';
+    }
+
+    async function saveHoSo(e) {
+      e.preventDefault();
+      const btn = document.getElementById('saveHoSoBtn');
+      btn.disabled = true; btn.textContent = 'Đang lưu...';
+      try {
+        await API.users.updateProfile({
+          mo_ta_ban_than: document.getElementById('f_moTa').value,
+          kinh_nghiem: document.getElementById('f_kinhNghiem').value,
+          hoc_van: document.getElementById('f_hocVan').value,
+          github: document.getElementById('f_github').value,
+          loai_hinh_mong_muon: document.getElementById('f_loaiHinh').value || null,
+          dia_chi_mong_muon: document.getElementById('f_diaChiMongMuon').value || null,
+        });
+        showToast('Cập nhật hồ sơ thành công! ', 'success');
+      } catch(e) { showToast(e.message || 'Lưu thất bại.', 'error'); }
+      btn.disabled = false; btn.textContent = '💾 Lưu hồ sơ';
+    }
+
+    function switchProfileTab(name) {
+      ['info','skills','hoso','company','myJobs','applications'].forEach(t => {
+        const panel = document.getElementById('panel_' + t);
+        const btn = document.getElementById('tab_btn_' + t);
+        if (panel) panel.style.display = t === name ? 'block' : 'none';
+        if (btn) btn.classList.toggle('active', t === name);
+      });
+      if (name === 'skills' && userSkills.length === 0) loadSkills();
+      if (name === 'myJobs') loadMyJobs();
+      if (name === 'applications') loadRecruiterApplications();
+      if (name === 'company') loadCompanyInfo();
+    }
+
+    async function handleAvatarChange(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('Ảnh quá lớn. Vui lòng chọn ảnh dưới 2MB.', 'warning');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target.result;
+        try {
+          await API.users.uploadAvatar(base64);
+          const avatarEl = document.getElementById('avatarEl');
+          avatarEl.innerHTML = `<img src="${base64}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+          // Cập nhật localStorage
+          const user = getUser();
+          if (user) { user.avatar = base64; saveAuth(localStorage.getItem('token'), user); }
+          showToast('Cập nhật ảnh đại diện thành công!', 'success');
+        } catch(err) {
+          showToast(err.message || 'Tải ảnh thất bại.', 'error');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ===== JOB SKILLS =====
+    let jobSkills = []; // { ky_nang_id, ten_ky_nang, muc_do }
+    let jobSkillSelectedId = null;
+
+    function searchJobSkill(q) {
+      const dd = document.getElementById('j_skill_dropdown');
+      if (!q) { dd.style.display = 'none'; return; }
+      const filtered = allSkills.filter(s =>
+        s.ten_ky_nang.toLowerCase().includes(q.toLowerCase()) &&
+        !jobSkills.find(js => js.ky_nang_id === s.id)
+      ).slice(0, 8);
+      dd.style.display = filtered.length ? 'block' : 'none';
+      dd.innerHTML = filtered.map(s => `
+        <div style="padding:10px 14px;cursor:pointer;font-size:13px;transition:0.15s"
+          onmouseenter="this.style.background='rgba(99,102,241,0.1)'" onmouseleave="this.style.background=''"
+          onmousedown="pickJobSkill(${s.id},'${s.ten_ky_nang.replace(/'/g,"\\'")}')">
+          <strong>${s.ten_ky_nang}</strong> <span style="color:var(--text-slate-500);font-size:12px">${s.danh_muc}</span>
+        </div>`).join('');
+    }
+
+    function pickJobSkill(id, name) {
+      jobSkillSelectedId = id;
+      document.getElementById('j_skill_input').value = name;
+      document.getElementById('j_skill_dropdown').style.display = 'none';
+    }
+
+    function addJobSkill() {
+      const name = document.getElementById('j_skill_input').value.trim();
+      const level = parseInt(document.getElementById('j_skill_level').value);
+      if (!name || !jobSkillSelectedId) { showToast('Vui lòng chọn kỹ năng từ danh sách.', 'warning'); return; }
+      if (jobSkills.find(s => s.ky_nang_id === jobSkillSelectedId)) { showToast('Kỹ năng này đã được thêm.', 'warning'); return; }
+      jobSkills.push({ ky_nang_id: jobSkillSelectedId, ten_ky_nang: name, muc_do: level });
+      document.getElementById('j_skill_input').value = '';
+      jobSkillSelectedId = null;
+      renderJobSkills();
+    }
+
+    function removeJobSkill(id) {
+      jobSkills = jobSkills.filter(s => s.ky_nang_id !== id);
+      renderJobSkills();
+    }
+
+    const levelLabels = ['','Cơ bản','Trung bình','Thành thạo','Chuyên sâu','Chuyên gia'];
+
+    function renderJobSkills() {
+      const list = document.getElementById('j_skills_list');
+      if (!jobSkills.length) {
+        list.innerHTML = '<div id="j_no_skill_msg" style="font-size:13px;color:var(--text-slate-500)">Chưa có kỹ năng nào. Thêm kỹ năng để AI gợi ý ứng viên phù hợp.</div>';
+        return;
+      }
+      list.innerHTML = jobSkills.map(s => `
+        <div style="display:flex;align-items:center;gap:10px;background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:8px 12px">
+          <span style="flex:1;font-size:13px;font-weight:600">${s.ten_ky_nang}</span>
+          <span style="font-size:12px;color:var(--text-slate-500)">Yêu cầu: ${levelLabels[s.muc_do]} (${s.muc_do}/5)</span>
+          <button type="button" onclick="removeJobSkill(${s.ky_nang_id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:16px;line-height:1">✕</button>
+        </div>`).join('');
+    }
+
+    // ===== RECRUITER FUNCTIONS =====
+    let editingJobId = null;
+
+    async function loadCompanyInfo() {
+      try {
+        const data = await API.users.getMyCompany();
+        if (data.company) {
+          const c = data.company;
+          document.getElementById('c_ten').value = c.ten_cong_ty || '';
+          document.getElementById('c_mota').value = c.mo_ta || '';
+          document.getElementById('c_website').value = c.website || '';
+          document.getElementById('c_quymo').value = c.quy_mo || '';
+          document.getElementById('c_diachi').value = c.dia_chi || '';
+        }
+      } catch(e) {}
+    }
+
+    async function saveCompany(e) {
+      e.preventDefault();
+      const btn = document.getElementById('saveCompanyBtn');
+      btn.disabled = true; btn.textContent = 'Đang lưu...';
+      try {
+        await API.users.updateMyCompany({
+          ten_cong_ty: document.getElementById('c_ten').value,
+          mo_ta: document.getElementById('c_mota').value,
+          website: document.getElementById('c_website').value,
+          quy_mo: document.getElementById('c_quymo').value,
+          dia_chi: document.getElementById('c_diachi').value,
+        });
+        showToast('Cập nhật thông tin công ty thành công!', 'success');
+      } catch(err) { showToast(err.message || 'Lưu thất bại.', 'error'); }
+      btn.disabled = false; btn.textContent = '💾 Lưu thông tin công ty';
+    }
+
+    function openPostJobModal(job = null) {
+      editingJobId = job ? job.id : null;
+      jobSkills = [];
+      jobSkillSelectedId = null;
+      document.getElementById('postJobModalTitle').textContent = job ? '✏️ Chỉnh Sửa Tin Tuyển Dụng' : '➕ Đăng Tin Tuyển Dụng';
+      document.getElementById('postJobBtn').textContent = job ? '💾 Lưu thay đổi' : '➕ Đăng tuyển dụng';
+      document.getElementById('j_tieu_de').value = job?.tieu_de || '';
+      document.getElementById('j_loai_hinh').value = job?.loai_hinh || 'toan_thoi_gian';
+      document.getElementById('j_dia_chi').value = job?.dia_chi || '';
+      document.getElementById('j_luong_min').value = job?.muc_luong_min || '';
+      document.getElementById('j_luong_max').value = job?.muc_luong_max || '';
+      document.getElementById('j_han_nop').value = job?.han_nop ? job.han_nop.split('T')[0] : '';
+      document.getElementById('j_mo_ta').value = job?.mo_ta || '';
+      document.getElementById('j_yeu_cau').value = job?.yeu_cau || '';
+      document.getElementById('j_quyen_loi').value = job?.quyen_loi || '';
+      // Load skills nếu edit
+      if (job?.ky_nang?.length) {
+        jobSkills = job.ky_nang.map(s => ({ ky_nang_id: s.id, ten_ky_nang: s.ten_ky_nang, muc_do: s.muc_do_yeu_cau || s.muc_do || 1 }));
+      }
+      renderJobSkills();
+      document.getElementById('postJobModal').style.display = 'flex';
+      // Load allSkills nếu chưa có
+      if (!allSkills.length) API.users.getAllSkills().then(r => { allSkills = r.skills; }).catch(() => {});
+    }
+
+    function closePostJobModal() {
+      document.getElementById('postJobModal').style.display = 'none';
+      document.getElementById('postJobForm').reset();
+      editingJobId = null;
+    }
+
+    async function submitJob(e) {
+      e.preventDefault();
+      const btn = document.getElementById('postJobBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading-spinner" style="width:16px;height:16px;border-width:2px;display:inline-block"></span> Đang xử lý...';
+      try {
+        const payload = {
+          tieu_de: document.getElementById('j_tieu_de').value,
+          mo_ta: document.getElementById('j_mo_ta').value,
+          yeu_cau: document.getElementById('j_yeu_cau').value,
+          quyen_loi: document.getElementById('j_quyen_loi').value,
+          loai_hinh: document.getElementById('j_loai_hinh').value,
+          dia_chi: document.getElementById('j_dia_chi').value,
+          muc_luong_min: parseInt(document.getElementById('j_luong_min').value) || 0,
+          muc_luong_max: parseInt(document.getElementById('j_luong_max').value) || 0,
+          han_nop: document.getElementById('j_han_nop').value || null,
+          ky_nang: jobSkills.map(s => ({ ky_nang_id: s.ky_nang_id, muc_do: s.muc_do })),
+        };
+        if (editingJobId) {
+          await API.jobs.update(editingJobId, payload);
+          showToast('Cập nhật tin tuyển dụng thành công!', 'success');
+        } else {
+          await API.jobs.create(payload);
+          showToast('Đăng tin tuyển dụng thành công!', 'success');
+        }
+        closePostJobModal();
+        loadMyJobs();
+        switchProfileTab('myJobs');
+      } catch(err) {
+        showToast(err.message || 'Thao tác thất bại.', 'error');
+      }
+      btn.disabled = false;
+      btn.textContent = editingJobId ? '💾 Lưu thay đổi' : '➕ Đăng tuyển dụng';
+    }
+
+    let myJobsList = [];
+
+    async function loadMyJobs() {
+      const container = document.getElementById('myJobsContainer');
+      container.innerHTML = '<div class="text-center" style="padding:40px"><div class="loading-spinner" style="margin:0 auto"></div></div>';
+      try {
+        const data = await API.admin.getJobs();
+        myJobsList = data.jobs || [];
+        // Populate filter dropdown
+        const sel = document.getElementById('filterAppJob');
+        sel.innerHTML = '<option value="">Tất cả tin</option>';
+        myJobsList.forEach(j => {
+          const opt = document.createElement('option');
+          opt.value = j.id; opt.textContent = j.tieu_de;
+          sel.appendChild(opt);
+        });
+        if (!myJobsList.length) {
+          container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-slate-500)">
+            <div style="font-size:40px;margin-bottom:12px">📭</div>
+            <div style="font-weight:600;margin-bottom:8px">Chưa có tin tuyển dụng nào</div>
+            <button onclick="openPostJobModal()" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap" style="margin-top:8px">➕ Đăng tin đầu tiên</button>
+          </div>`;
+          return;
+        }
+        container.innerHTML = myJobsList.map(j => `
+          <div style="border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;transition:0.2s" onmouseenter="this.style.borderColor='rgba(99,102,241,0.4)'" onmouseleave="this.style.borderColor='var(--border)'">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+              <div style="flex:1">
+                <div style="font-weight:700;font-size:15px;margin-bottom:4px">${j.tieu_de}</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+                  <span style="background:rgba(0,0,0,0.05);border-radius:20px;padding:2px 10px;font-size:12px">${getJobTypeLabel(j.loai_hinh)}</span>
+                  <span style="background:rgba(6,182,212,0.1);color:#06b6d4;border-radius:20px;padding:2px 10px;font-size:12px">${j.so_ung_tuyen} ứng tuyển</span>
+                  <span style="background:${j.trang_thai==='dang_tuyen'?'rgba(16,185,129,0.1)':'rgba(239,68,68,0.1)'};color:${j.trang_thai==='dang_tuyen'?'#10b981':'#ef4444'};border-radius:20px;padding:2px 10px;font-size:12px">${j.trang_thai==='dang_tuyen'?'🟢 Đang tuyển':'🔴 Đã đóng'}</span>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
+                <button onclick="showSuggestedCandidates(${j.id},'${j.tieu_de.replace(/'/g,"\\'")}') " style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;color:var(--primary-light)">✨ Ứng viên phù hợp</button>
+                <button onclick="toggleJobStatus(${j.id},'${j.trang_thai}',this)" style="background:${j.trang_thai==='dang_tuyen'?'rgba(239,68,68,0.08)':'rgba(16,185,129,0.08)'};border:1px solid ${j.trang_thai==='dang_tuyen'?'rgba(239,68,68,0.3)':'rgba(16,185,129,0.3)'};border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;color:${j.trang_thai==='dang_tuyen'?'#ef4444':'#10b981'}">${j.trang_thai==='dang_tuyen'?'🔴 Đóng tin':'🟢 Mở lại'}</button>
+                <button onclick="editJob(${j.id})" style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;color:var(--text-slate-500)">✏️ Sửa</button>
+                <button onclick="deleteJob(${j.id},this)" style="background:none;border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;color:#ef4444">🗑️ Xóa</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch(e) { container.innerHTML = '<p style="color:var(--text-slate-500);padding:20px">Không tải được dữ liệu.</p>'; }
+    }
+
+    async function editJob(id) {
+      try {
+        const data = await API.jobs.getById(id);
+        openPostJobModal(data.job);
+      } catch(e) { showToast('Không tải được thông tin tin tuyển dụng.', 'error'); }
+    }
+
+    async function deleteJob(id, btn) {
+      if (!confirm('Bạn có chắc muốn xóa tin này?')) return;
+      btn.disabled = true;
+      try {
+        await API.jobs.delete(id);
+        showToast('Đã xóa tin tuyển dụng.', 'success');
+        loadMyJobs();
+      } catch(e) { showToast('Xóa thất bại.', 'error'); btn.disabled = false; }
+    }
+
+    async function toggleJobStatus(id, currentStatus, btn) {
+      const newStatus = currentStatus === 'dang_tuyen' ? 'da_dong' : 'dang_tuyen';
+      btn.disabled = true;
+      try {
+        await API.jobs.update(id, { trang_thai: newStatus });
+        showToast(newStatus === 'da_dong' ? 'Đã đóng tin tuyển dụng.' : 'Đã mở lại tin tuyển dụng.', 'success');
+        loadMyJobs();
+      } catch(e) { showToast('Cập nhật thất bại.', 'error'); btn.disabled = false; }
+    }
+
+    async function loadRecruiterApplications() {
+      const container = document.getElementById('recruiterAppsContainer');
+      const jobId = document.getElementById('filterAppJob').value;
+      container.innerHTML = '<div class="text-center" style="padding:40px"><div class="loading-spinner" style="margin:0 auto"></div></div>';
+      try {
+        const data = await API.admin.getApplications({ cong_viec_id: jobId, limit: 50 });
+        const apps = data.applications;
+        if (!apps.length) {
+          container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-slate-500)"><div style="font-size:40px;margin-bottom:12px">📭</div><div>Chưa có hồ sơ ứng tuyển nào</div></div>';
+          return;
+        }
+        container.innerHTML = apps.map(a => `
+          <div style="border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px">
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0">${getInitials(a.ung_vien)}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:14px">${a.ung_vien}</div>
+              <div style="font-size:12px;color:var(--text-slate-500)">${a.cong_viec} · ${formatRelativeTime(a.ngay_ung_tuyen)}</div>
+              ${a.thu_gioi_thieu ? `<div style="font-size:12px;color:var(--text-slate-500);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px">"${a.thu_gioi_thieu}"</div>` : ''}
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+              <span class="${getStatusClass(a.trang_thai)}">${getStatusLabel(a.trang_thai)}</span>
+              <button onclick="viewCandidate(${a.ung_vien_id})" style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--primary-light)">Xem hồ sơ</button>
+              ${a.trang_thai === 'cho_duyet' ? `
+                <button onclick="updateAppStatus(${a.id},'chap_nhan',this)" style="background:#10b981;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:white">✓ Duyệt</button>
+                <button onclick="updateAppStatus(${a.id},'tu_choi',this)" style="background:#ef4444;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:white">✗ Từ chối</button>
+              ` : ''}
+            </div>
+          </div>
+        `).join('');
+      } catch(e) { container.innerHTML = '<p style="color:var(--text-slate-500);padding:20px">Không tải được dữ liệu.</p>'; }
+    }
+
+    async function updateAppStatus(id, status, btn) {
+      btn.disabled = true;
+      try {
+        await API.admin.updateApplication(id, { trang_thai: status });
+        showToast(`Đã ${getStatusLabel(status).toLowerCase()}.`, 'success');
+        loadRecruiterApplications();
+      } catch(e) { showToast('Cập nhật thất bại.', 'error'); btn.disabled = false; }
+    }
+
+    async function showSuggestedCandidates(jobId, jobTitle) {
+      document.getElementById('suggestModalTitle').textContent = `✨ Ứng viên phù hợp: ${jobTitle}`;
+      document.getElementById('suggestModal').style.display = 'flex';
+      document.getElementById('suggestModalBody').innerHTML = '<div class="text-center" style="padding:40px"><div class="loading-spinner" style="margin:0 auto"></div></div>';
+      try {
+        const data = await API.recommend.getCandidates(jobId);
+        const candidates = data.candidates;
+        if (!candidates.length) {
+          document.getElementById('suggestModalBody').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-slate-500)"><div style="font-size:40px;margin-bottom:12px">🔍</div><div>Chưa có ứng viên nào phù hợp</div></div>';
+          return;
+        }
+        document.getElementById('suggestModalBody').innerHTML = `
+          <p style="font-size:13px;color:var(--text-slate-500);margin-bottom:16px">Tìm thấy <strong>${candidates.length}</strong> ứng viên phù hợp</p>
+          ${candidates.map(c => `
+            <div style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;background:${c.score>=70?'rgba(16,185,129,0.15)':c.score>=40?'rgba(245,158,11,0.15)':'rgba(239,68,68,0.15)'};color:${c.score>=70?'#10b981':c.score>=40?'#f59e0b':'#ef4444'}">${c.score}%</div>
+                <div style="flex:1">
+                  <div style="font-weight:700;font-size:14px">${c.ten}</div>
+                  <div style="font-size:12px;color:var(--text-slate-500)">${c.email}${c.dia_chi?' · '+c.dia_chi:''}</div>
+                </div>
+                <button onclick="viewCandidate(${c.id})" style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:6px;padding:5px 12px;font-size:12px;cursor:pointer;color:var(--primary-light)">Xem hồ sơ</button>
+              </div>
+              ${c.matchedSkills.length ? `<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px">
+                ${c.matchedSkills.map(s=>`<span style="background:rgba(16,185,129,0.1);color:#10b981;border-radius:20px;padding:2px 8px;font-size:11px">✓ ${s.ten_ky_nang}</span>`).join('')}
+                ${c.missingSkills.map(s=>`<span style="background:rgba(239,68,68,0.07);color:#ef4444;border-radius:20px;padding:2px 8px;font-size:11px">✗ ${s.ten_ky_nang}</span>`).join('')}
+              </div>` : ''}
+            </div>
+          `).join('')}
+        `;
+      } catch(e) { document.getElementById('suggestModalBody').innerHTML = '<p style="color:var(--text-slate-500);padding:20px">Không tải được dữ liệu.</p>'; }
+    }
+
+    function closeSuggestModal() { document.getElementById('suggestModal').style.display = 'none'; }
+
+    async function viewCandidate(id) {
+      document.getElementById('candidateModal').style.display = 'flex';
+      document.getElementById('candidateModalBody').innerHTML = '<div class="text-center" style="padding:40px"><div class="loading-spinner" style="margin:0 auto"></div></div>';
+      try {
+        const data = await API.users.getCandidate(id);
+        const c = data.candidate;
+        document.getElementById('candidateModalTitle').textContent = '👤 ' + c.ten;
+        document.getElementById('candidateModalBody').innerHTML = `
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+            <div style="width:52px;height:52px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:white;flex-shrink:0">${getInitials(c.ten)}</div>
+            <div>
+              <div style="font-size:16px;font-weight:700">${c.ten}</div>
+              <div style="font-size:13px;color:var(--text-slate-500)">✉️ ${c.email}${c.so_dien_thoai?' · 📞 '+c.so_dien_thoai:''}${c.dia_chi?' · 📍 '+c.dia_chi:''}</div>
+            </div>
+          </div>
+          ${c.ho_so?.mo_ta_ban_than?`<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-slate-500);margin-bottom:6px">Giới thiệu</div><p style="font-size:13px;line-height:1.7">${c.ho_so.mo_ta_ban_than}</p></div>`:''}
+          ${c.ho_so?.kinh_nghiem?`<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-slate-500);margin-bottom:6px">Kinh nghiệm</div><p style="font-size:13px;line-height:1.7;white-space:pre-line">${c.ho_so.kinh_nghiem}</p></div>`:''}
+          ${c.ho_so?.hoc_van?`<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-slate-500);margin-bottom:6px">Học vấn</div><p style="font-size:13px;line-height:1.7">${c.ho_so.hoc_van}</p></div>`:''}
+          ${c.skills?.length?`<div><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-slate-500);margin-bottom:8px">Kỹ năng</div><div style="display:flex;flex-wrap:wrap;gap:6px">${c.skills.map(s=>`<span style="background:rgba(99,102,241,0.1);color:var(--primary-light);border-radius:20px;padding:3px 10px;font-size:12px">${s.ten_ky_nang} ${'⭐'.repeat(s.muc_do)}</span>`).join('')}</div></div>`:''}
+          ${c.ho_so?.github?`<div style="margin-top:14px"><a href="https://${c.ho_so.github}" target="_blank" style="color:var(--primary-light);font-size:13px">🔗 ${c.ho_so.github}</a></div>`:''}
+        `;
+      } catch(e) { document.getElementById('candidateModalBody').innerHTML = '<p style="color:var(--text-slate-500);padding:20px">Không tải được thông tin.</p>'; }
+    }
+
+    function closeCandidateModal() { document.getElementById('candidateModal').style.display = 'none'; }
+
+    // Close modals on backdrop click
+    document.getElementById('postJobModal').addEventListener('click', e => { if(e.target===e.currentTarget) closePostJobModal(); });
+    document.getElementById('suggestModal').addEventListener('click', e => { if(e.target===e.currentTarget) closeSuggestModal(); });
+    document.getElementById('candidateModal').addEventListener('click', e => { if(e.target===e.currentTarget) closeCandidateModal(); });
+
+    // Hide dropdown on click outside
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#skillSearchInput') && !e.target.closest('#skillDropdown')) {
+        document.getElementById('skillDropdown').style.display = 'none';
+      }
+      if (!e.target.closest('#j_skill_input') && !e.target.closest('#j_skill_dropdown')) {
+        const dd = document.getElementById('j_skill_dropdown');
+        if (dd) dd.style.display = 'none';
+      }
+    });
+
+    // ===== XUẤT WORD =====
+    async function exportToWord() {
+      const user = getUser();
+      const ten = document.getElementById('profileName').textContent || user?.ten || 'Ho So';
+      const email = document.getElementById('f_email').value || '';
+      const phone = document.getElementById('f_phone').value || '';
+      const address = document.getElementById('f_address').value || '';
+      const moTa = document.getElementById('f_moTa').value || '';
+      const kinhNghiem = document.getElementById('f_kinhNghiem').value || '';
+      const hocVan = document.getElementById('f_hocVan').value || '';
+      const github = document.getElementById('f_github').value || '';
+
+      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+      const makeHeading = (text) => `
+        <w:p>
+          <w:pPr><w:pStyle w:val="Heading2"/><w:spacing w:before="240" w:after="80"/></w:pPr>
+          <w:r><w:rPr><w:b/><w:color w:val="6366f1"/><w:sz w:val="26"/></w:rPr><w:t>${esc(text)}</w:t></w:r>
+        </w:p>`;
+
+      const makeLines = (text) => text.split('\n').filter(l => l.trim()).map(line => `
+        <w:p>
+          <w:pPr><w:spacing w:after="60"/></w:pPr>
+          <w:r><w:rPr><w:sz w:val="24"/></w:rPr><w:t xml:space="preserve">${esc(line)}</w:t></w:r>
+        </w:p>`).join('');
+
+      const makeSection = (title, content) => content.trim()
+        ? makeHeading(title) + makeLines(content) : '';
+
+      const skillsText = userSkills.length
+        ? userSkills.map(s => `${s.ten_ky_nang} (${getLevelLabel(s.muc_do).replace(/⭐/g,'').trim()})`).join('  •  ')
+        : '';
+
+      const contactLine = [email, phone, address].filter(Boolean).join('   |   ');
+
+      const bodyXml = `
+        <w:p>
+          <w:pPr><w:jc w:val="center"/><w:spacing w:after="80"/></w:pPr>
+          <w:r><w:rPr><w:b/><w:sz w:val="52"/><w:color w:val="6366f1"/></w:rPr><w:t>${esc(ten)}</w:t></w:r>
+        </w:p>
+        <w:p>
+          <w:pPr><w:jc w:val="center"/><w:spacing w:after="320"/></w:pPr>
+          <w:r><w:rPr><w:sz w:val="20"/><w:color w:val="64748b"/></w:rPr><w:t>${esc(contactLine)}</w:t></w:r>
+        </w:p>
+        ${makeSection('GIỚI THIỆU BẢN THÂN', moTa)}
+        ${makeSection('KINH NGHIỆM LÀM VIỆC', kinhNghiem)}
+        ${makeSection('HỌC VẤN', hocVan)}
+        ${github ? makeSection('GITHUB', github) : ''}
+        ${skillsText ? makeHeading('KỸ NĂNG') + `<w:p><w:pPr><w:spacing w:after="60"/></w:pPr><w:r><w:rPr><w:sz w:val="24"/></w:rPr><w:t xml:space="preserve">${esc(skillsText)}</w:t></w:r></w:p>` : ''}
+      `;
+
+      const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+  xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <w:body>
+    ${bodyXml}
+    <w:sectPr>
+      <w:pgMar w:top="1080" w:right="1080" w:bottom="1080" w:left="1080"/>
+    </w:sectPr>
+  </w:body>
+</w:document>`;
+
+      const relsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+
+      const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:style w:type="paragraph" w:styleId="Heading2">
+    <w:name w:val="heading 2"/>
+    <w:pPr><w:spacing w:before="240" w:after="80"/></w:pPr>
+    <w:rPr><w:b/><w:sz w:val="26"/></w:rPr>
+  </w:style>
+</w:styles>`;
+
+      const contentTypesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+</Types>`;
+
+      const rootRelsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`;
+
+      const zip = new JSZip();
+      zip.file('[Content_Types].xml', contentTypesXml);
+      zip.file('_rels/.rels', rootRelsXml);
+      zip.file('word/document.xml', documentXml);
+      zip.file('word/styles.xml', stylesXml);
+      zip.file('word/_rels/document.xml.rels', relsXml);
+
+      const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `HoSo_${ten.replace(/\s+/g, '_')}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Xuất file Word thành công!', 'success');
+    }
+
+    // Init
+    loadProfile();
+    loadSkills();
+
+    // Load counts
+    async function loadCounts() {
+      try {
+        const [appRes, savedRes] = await Promise.all([API.apply.getMy(), API.users.getSavedJobs()]);
+        document.getElementById('applyCount').textContent = appRes.applications.length;
+        document.getElementById('savedCount').textContent = savedRes.savedJobs.length;
+      } catch(e) {}
+    }
+    loadCounts();
+  </script>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Danh Sách Việc Làm — SmartJob</title>
+  <meta name="description" content="Tìm kiếm và lọc hàng ngàn công việc phù hợp với bạn trên Tuyển Dụng.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/tailwind-config.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar" id="navbar"></nav>
+
+  <div class="page-wrapper">
+    <!-- Page Header -->
+    <div style="background:var(--bg-surface);border-bottom:1px solid var(--border);padding:32px 0">
+      <div class="max-w-7xl mx-auto px-5">
+        <h1 style="font-size:28px;margin-bottom:16px"> Tìm Kiếm <span class="text-primary">Việc Làm</span></h1>
+        <div class="search-bar" style="max-width:600px">
+          <input type="text" id="searchInput" placeholder="Tìm công việc, kỹ năng, công ty..." style="font-size:15px">
+          <button class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap" onclick="applyFilters()"> Tìm kiếm</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-5 py-[60px]" style="padding-top:32px">
+      <div class="sidebar-layout">
+        <!-- Sidebar Filter -->
+        <aside>
+          <div class="filter-sidebar">
+            <div class="flex items-center justify-between mb-6">
+              <h3 style="font-size:16px">🎛️ Bộ lọc</h3>
+              <button class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-black/5 text-slate-500 border border-slate-200 text-[13px] font-semibold rounded-lg transition-all hover:-translate-y-0.5 hover:text-primary cursor-pointer whitespace-nowrap !px-3 !py-1.5 !text-xs !rounded-md" onclick="resetFilters()">Reset</button>
+            </div>
+
+            <!-- Loại hình -->
+            <div class="filter-py-[60px]">
+              <div class="filter-title">Loại hình</div>
+              <label class="filter-option">
+                <input type="radio" name="loai_hinh" value="" checked onchange="applyFilters()"> Tất cả
+              </label>
+              <label class="filter-option">
+                <input type="radio" name="loai_hinh" value="toan_thoi_gian" onchange="applyFilters()">  Toàn thời gian
+              </label>
+              <label class="filter-option">
+                <input type="radio" name="loai_hinh" value="ban_thoi_gian" onchange="applyFilters()">  Bán thời gian
+              </label>
+              <label class="filter-option">
+                <input type="radio" name="loai_hinh" value="tu_do" onchange="applyFilters()">  Tự do
+              </label>
+              <label class="filter-option">
+                <input type="radio" name="loai_hinh" value="thuc_tap" onchange="applyFilters()">  Thực tập
+              </label>
+            </div>
+
+            <hr class="border-0 border-t border-slate-200 my-6">
+
+            <!-- Địa điểm -->
+            <div class="filter-py-[60px]">
+              <div class="filter-title">Địa điểm</div>
+              <label class="filter-option">
+                <input type="radio" name="dia_chi" value="" checked onchange="applyFilters()"> Tất cả
+              </label>
+              <label class="filter-option">
+                <input type="radio" name="dia_chi" value="Hà Nội" onchange="applyFilters()"> 🏛️ Hà Nội
+              </label>
+              <label class="filter-option">
+                <input type="radio" name="dia_chi" value="TP.HCM" onchange="applyFilters()"> 🌆 TP.HCM
+              </label>
+              <label class="filter-option">
+                <input type="radio" name="dia_chi" value="Đà Nẵng" onchange="applyFilters()"> 🏖️ Đà Nẵng
+              </label>
+            </div>
+
+            <hr class="border-0 border-t border-slate-200 my-6">
+
+            <!-- Mức lương -->
+            <div class="filter-py-[60px]">
+              <div class="filter-title">Mức lương (triệu VNĐ)</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <input type="number" id="luongMin" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" placeholder="Từ" min="0" onchange="applyFilters()" style="font-size:13px">
+                <input type="number" id="luongMax" class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" placeholder="Đến" min="0" onchange="applyFilters()" style="font-size:13px">
+              </div>
+            </div>
+
+            <hr class="border-0 border-t border-slate-200 my-6">
+
+            <!-- AI Suggest link -->
+            <div style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.25);border-radius:var(--radius-md);padding:16px;text-align:center">
+              <div style="font-size:24px;margin-bottom:8px"></div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:6px">Thử Gợi Ý Việc Làm</div>
+              <p class="text-slate-500 text-[13px]" style="font-size:12px;margin-bottom:12px">Để AI phân tích kỹ năng và tìm công việc phù hợp nhất với bạn</p>
+              <a href="/recommend.html" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap !px-3 !py-1.5 !text-xs !rounded-md w-full !flex">Gợi Ý Cho Tôi </a>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main>
+          <!-- Result bar -->
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <span id="resultCount" class="text-slate-500 text-[13px]">Đang tải...</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="text-slate-500 text-[13px]">Sắp xếp:</span>
+              <select class="w-full px-4 py-3 bg-white border-[1.5px] border-slate-200 rounded-xl text-slate-900 text-[14px] transition-all hover:border-primary/50 focus:border-primary focus:ring-[3px] focus:ring-primary/15 outline-none" id="sortBy" style="width:auto;padding:6px 12px;font-size:13px" onchange="applyFilters()">
+                <option value="newest">Mới nhất</option>
+                <option value="salary_desc">Lương cao nhất</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Jobs Grid -->
+          <div class="grid gap-6 grid-cols-[repeat(auto-fill,minmax(320px,1fr))]" id="jobsGrid">
+            <!-- Skeleton loading -->
+            ${Array(6).fill(0).map(() => `
+              <div class="job-card">
+                <div class="job-card-header">
+                  <div class="skeleton" style="width:52px;height:52px;border-radius:12px;flex-shrink:0"></div>
+                  <div style="flex:1">
+                    <div class="skeleton skeleton-text wide"></div>
+                    <div class="skeleton skeleton-text medium"></div>
+                  </div>
+                </div>
+                <div class="skeleton skeleton-text" style="margin:12px 0"></div>
+                <div style="display:flex;gap:6px;margin:8px 0">
+                  <div class="skeleton" style="width:60px;height:22px;border-radius:20px"></div>
+                  <div class="skeleton" style="width:70px;height:22px;border-radius:20px"></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination" id="pagination"></div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+  <script src="/js/api.js"></script>
+  <script>
+    let currentPage = 1;
+    const limit = 9;
+
+    // Parse URL params on load
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('search')) document.getElementById('searchInput').value = params.get('search');
+      if (params.get('loai_hinh')) {
+        const radio = document.querySelector(`input[name="loai_hinh"][value="${params.get('loai_hinh')}"]`);
+        if (radio) radio.checked = true;
+      }
+      loadJobs();
+    });
+
+    function getFilters() {
+      const loaiHinh = document.querySelector('input[name="loai_hinh"]:checked')?.value || '';
+      const diaChi = document.querySelector('input[name="dia_chi"]:checked')?.value || '';
+      const luongMinVal = document.getElementById('luongMin').value;
+      const luongMaxVal = document.getElementById('luongMax').value;
+      const search = document.getElementById('searchInput').value.trim();
+
+      const params = { page: currentPage, limit };
+      if (search) params.search = search;
+      if (loaiHinh) params.loai_hinh = loaiHinh;
+      if (diaChi) params.dia_chi = diaChi;
+      if (luongMinVal) params.luong_min = parseInt(luongMinVal) * 1000000;
+      if (luongMaxVal) params.luong_max = parseInt(luongMaxVal) * 1000000;
+      return params;
+    }
+
+    async function loadJobs() {
+      const grid = document.getElementById('jobsGrid');
+      grid.innerHTML = Array(6).fill(0).map(() => `
+        <div class="job-card">
+          <div style="display:flex;gap:12px;margin-bottom:12px">
+            <div class="skeleton" style="width:52px;height:52px;border-radius:12px;flex-shrink:0"></div>
+            <div style="flex:1"><div class="skeleton skeleton-text wide"></div><div class="skeleton skeleton-text medium mt-8"></div></div>
+          </div>
+          <div class="skeleton skeleton-text mt-8"></div>
+          <div style="display:flex;gap:6px;margin:10px 0">
+            <div class="skeleton" style="width:60px;height:22px;border-radius:20px"></div>
+            <div class="skeleton" style="width:70px;height:22px;border-radius:20px"></div>
+          </div>
+        </div>`).join('');
+
+      try {
+        const data = await API.jobs.getAll(getFilters());
+        renderJobs(data.jobs);
+        renderPagination(data.pagination);
+        document.getElementById('resultCount').textContent = `Tìm thấy ${data.pagination.total} công việc`;
+      } catch (e) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-state-icon">😕</div>
+          <div class="empty-state-title">Không tải được dữ liệu</div>
+          <p class="empty-state-desc">Vui lòng kiểm tra kết nối server.</p>
+        </div>`;
+      }
+    }
+
+    function renderJobs(jobs) {
+      const grid = document.getElementById('jobsGrid');
+      if (!jobs || jobs.length === 0) {
+        grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+          <div class="empty-state-icon"></div>
+          <div class="empty-state-title">Không tìm thấy công việc phù hợp</div>
+          <p class="empty-state-desc">Thử thay đổi từ khóa hoặc bộ lọc của bạn.</p>
+          <button class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-transparent text-primary-light border-[1.5px] border-primary text-[13px] font-semibold rounded-lg transition-all hover:bg-primary hover:text-white hover:-translate-y-0.5 cursor-pointer whitespace-nowrap mt-6" onclick="resetFilters()">Xóa bộ lọc</button>
+        </div>`;
+        return;
+      }
+
+      grid.innerHTML = jobs.map((job, i) => `
+        <div class="job-card animate-fadeInUp" style="animation-delay:${i * 0.05}s" onclick="window.location.href='/job-detail.html?id=${job.id}'">
+          <div class="job-card-header">
+            <div class="company-logo">${getInitials(job.ten_cong_ty)}</div>
+            <div style="flex:1;min-width:0">
+              <div class="job-card-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${job.tieu_de}</div>
+              <div class="job-card-company"> ${job.ten_cong_ty}</div>
+            </div>
+            <span class="badge ${getJobTypeBadge(job.loai_hinh)}" style="flex-shrink:0;margin-left:8px">${getJobTypeLabel(job.loai_hinh)}</span>
+          </div>
+
+          <div class="job-card-meta">
+            <span> ${job.dia_chi || 'Linh hoạt'}</span>
+            <span> ${formatRelativeTime(job.ngay_tao)}</span>
+            ${job.han_nop ? `<span>📅 HSD: ${formatDate(job.han_nop)}</span>` : ''}
+          </div>
+
+          <div class="job-card-skills">
+            ${(job.ky_nang || []).slice(0, 4).map(s => `<span class="skill-tag">${s.ten_ky_nang}</span>`).join('')}
+            ${(job.ky_nang || []).length > 4 ? `<span class="badge bg-black/5 text-slate-500 border border-slate-200 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium">+${job.ky_nang.length - 4}</span>` : ''}
+          </div>
+
+          <div class="job-card-footer">
+            <span class="salary-badge"> ${formatSalary(job.muc_luong_min, job.muc_luong_max)}</span>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="text-slate-500 text-[13px]" style="font-size:12px">👁 ${job.luot_xem || 0}</span>
+              <span class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap !px-3 !py-1.5 !text-xs !rounded-md" onclick="event.stopPropagation();window.location.href='/job-detail.html?id=${job.id}'">Xem →</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderPagination(pagination) {
+      const el = document.getElementById('pagination');
+      if (!pagination || pagination.totalPages <= 1) { el.innerHTML = ''; return; }
+
+      let html = `<button class="page-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>‹</button>`;
+      for (let i = 1; i <= pagination.totalPages; i++) {
+        if (i === 1 || i === pagination.totalPages || Math.abs(i - currentPage) <= 2) {
+          html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+        } else if (Math.abs(i - currentPage) === 3) {
+          html += `<span class="page-btn" style="pointer-events:none">...</span>`;
+        }
+      }
+      html += `<button class="page-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === pagination.totalPages ? 'disabled' : ''}>›</button>`;
+      el.innerHTML = html;
+    }
+
+    function goToPage(page) {
+      currentPage = page;
+      loadJobs();
+      window.scrollTo({ top: 200, behavior: 'smooth' });
+    }
+
+    function applyFilters() {
+      currentPage = 1;
+      loadJobs();
+    }
+
+    function resetFilters() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('luongMin').value = '';
+      document.getElementById('luongMax').value = '';
+      document.querySelectorAll('input[name="loai_hinh"]')[0].checked = true;
+      document.querySelectorAll('input[name="dia_chi"]')[0].checked = true;
+      applyFilters();
+    }
+
+    function getJobTypeBadge(type) {
+      const map = { toan_thoi_gian: 'bg-primary/15 text-primary-light border border-primary/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium', ban_thoi_gian: 'bg-amber-500/15 text-amber-500 border border-amber-500/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium', tu_do: 'bg-cyan-500/15 text-cyan-500 border border-cyan-500/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium', thuc_tap: 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium' };
+      return map[type] || 'bg-black/5 text-slate-500 border border-slate-200 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium';
+    }
+
+    document.getElementById('searchInput').addEventListener('keypress', e => { if (e.key === 'Enter') applyFilters(); });
+  </script>
+</body>
+</html>

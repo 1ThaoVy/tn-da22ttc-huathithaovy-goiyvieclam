@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đơn Ứng Tuyển Của Tôi — SmartJob</title>
+  <meta name="description" content="Theo dõi trạng thái các đơn ứng tuyển của bạn.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/js/tailwind-config.js"></script>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav class="navbar" id="navbar"></nav>
+  <div class="page-wrapper">
+    <div style="background:var(--bg-surface);border-bottom:1px solid var(--border);padding:32px 0">
+      <div class="max-w-7xl mx-auto px-5">
+        <h1 style="font-size:28px;margin-bottom:6px"> Đơn Ứng Tuyển <span class="text-primary">Của Tôi</span></h1>
+        <p class="text-slate-500 text-[13px]">Theo dõi trạng thái tất cả các đơn ứng tuyển của bạn</p>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-5 py-[60px]" style="padding-top:28px">
+      <!-- Filter tabs -->
+      <div class="tabs mb-8">
+        <button class="tab-btn active" onclick="filterByStatus('')">🗂️ Tất cả <span id="count_all" class="badge bg-black/5 text-slate-500 border border-slate-200 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium" style="margin-left:4px">0</span></button>
+        <button class="tab-btn" onclick="filterByStatus('cho_duyet')"> Chờ duyệt <span id="count_cho_duyet" class="badge bg-amber-500/15 text-amber-500 border border-amber-500/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium" style="margin-left:4px">0</span></button>
+        <button class="tab-btn" onclick="filterByStatus('chap_nhan')"> Chấp nhận <span id="count_chap_nhan" class="badge bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium" style="margin-left:4px">0</span></button>
+        <button class="tab-btn" onclick="filterByStatus('tu_choi')"> Từ chối <span id="count_tu_choi" class="badge bg-red-500/15 text-red-500 border border-red-500/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium" style="margin-left:4px">0</span></button>
+      </div>
+
+      <!-- Loading -->
+      <div id="loadingSection" class="text-center" style="padding:60px 0">
+        <div class="loading-spinner" style="margin:0 auto 16px"></div>
+        <p class="text-slate-500 text-[13px]">Đang tải dữ liệu...</p>
+      </div>
+
+      <!-- Banner chọn việc — hiện khi có ≥2 đơn chấp nhận và chưa chọn -->
+      <div id="chooseJobBanner" style="display:none;margin-bottom:20px;padding:20px 24px;background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.08));border:1.5px solid rgba(99,102,241,0.3);border-radius:16px">
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          <span style="font-size:32px">🎉</span>
+          <div style="flex:1;min-width:200px">
+            <div style="font-size:16px;font-weight:700;margin-bottom:4px">Chúc mừng! Bạn được nhiều công ty chấp nhận</div>
+            <div class="text-slate-500 text-[13px]">Hãy chọn <strong>1 công việc</strong> bạn muốn nhận — các đơn còn lại sẽ được thông báo từ chối lịch sự.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Applications list -->
+      <div id="applicationsList" style="display:none;flex-direction:column;gap:16px"></div>
+
+      <!-- Empty -->
+      <div id="emptySection" style="display:none">
+        <div class="empty-state">
+          <div class="empty-state-icon"></div>
+          <div class="empty-state-title">Chưa có đơn ứng tuyển nào</div>
+          <p class="empty-state-desc">Bắt đầu tìm kiếm và ứng tuyển công việc ngay!</p>
+          <a href="/jobs.html" class="inline-flex items-center justify-center gap-8 px-5 py-2.5 bg-primary text-white text-[13px] font-semibold rounded-lg shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer whitespace-nowrap mt-6"> Tìm việc ngay</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" class="toast-container"></div>
+  <script src="/js/api.js"></script>
+  <script>
+    if (!requireAuth()) {}
+
+    let allApplications = [];
+
+    async function loadApplications() {
+      try {
+        const data = await API.apply.getMy();
+        allApplications = data.applications;
+        document.getElementById('loadingSection').style.display = 'none';
+        updateCounts();
+        checkChooseJobBanner();
+        renderApplications(allApplications);
+      } catch(e) {
+        document.getElementById('loadingSection').style.display = 'none';
+        showToast('Không tải được dữ liệu.', 'error');
+      }
+    }
+
+    function checkChooseJobBanner() {
+      const chapNhan = allApplications.filter(a => a.trang_thai === 'chap_nhan');
+      const daChon = allApplications.find(a => a.da_chon == 1);
+      // Hiện banner nếu ≥2 đơn chấp nhận và chưa chọn
+      document.getElementById('chooseJobBanner').style.display =
+        (chapNhan.length >= 2 && !daChon) ? 'block' : 'none';
+    }
+
+    function updateCounts() {
+      const counts = { all: allApplications.length, cho_duyet: 0, chap_nhan: 0, tu_choi: 0 };
+      allApplications.forEach(a => { if (counts[a.trang_thai] !== undefined) counts[a.trang_thai]++; });
+      document.getElementById('count_all').textContent = counts.all;
+      document.getElementById('count_cho_duyet').textContent = counts.cho_duyet;
+      document.getElementById('count_chap_nhan').textContent = counts.chap_nhan;
+      document.getElementById('count_tu_choi').textContent = counts.tu_choi;
+    }
+
+    function filterByStatus(status) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      const filtered = status ? allApplications.filter(a => a.trang_thai === status) : allApplications;
+      renderApplications(filtered);
+    }
+
+    function renderApplications(apps) {
+      const list = document.getElementById('applicationsList');
+      const empty = document.getElementById('emptySection');
+
+      if (!apps || apps.length === 0) {
+        list.style.display = 'none';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+      list.style.display = 'flex';
+
+      // Đếm số đơn chấp nhận để biết có cần hiện nút chọn không
+      const soChapNhan = allApplications.filter(a => a.trang_thai === 'chap_nhan').length;
+      const daCoChon = allApplications.some(a => a.da_chon == 1);
+
+      list.innerHTML = apps.map((app, i) => {
+        const statusInfo = {
+          cho_duyet: { class: 'bg-amber-500/15 text-amber-500 border border-amber-500/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium', icon: '', label: 'Chờ duyệt' },
+          chap_nhan: { class: 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium', icon: '', label: 'Chấp nhận' },
+          tu_choi:   { class: 'bg-red-500/15 text-red-500 border border-red-500/30 inline-flex items-center px-2.5 py-1 rounded-full text-[12px] font-medium', icon: '', label: 'Từ chối' },
+        }[app.trang_thai] || {};
+
+        const isChapNhan = app.trang_thai === 'chap_nhan';
+        const isDaChon = app.da_chon == 1;
+
+        // Border nổi bật nếu đã chọn
+        const cardStyle = isDaChon
+          ? 'border-color:rgba(99,102,241,0.6);box-shadow:0 0 0 3px rgba(99,102,241,0.15);'
+          : '';
+
+        return `
+          <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all hover:-translate-y-1 hover:shadow-lg animate-fadeInUp" style="animation-delay:${i * 0.05}s;${cardStyle}">
+            ${isDaChon ? `<div style="background:var(--gradient-primary);height:3px"></div>` : ''}
+            <div class="p-6">
+              <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+                <div class="company-logo" style="width:52px;height:52px;font-size:20px;flex-shrink:0">${getInitials(app.ten_cong_ty)}</div>
+                <div style="flex:1;min-width:200px">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+                    <div>
+                      <div style="font-size:16px;font-weight:700;margin-bottom:4px">
+                        <a href="/job-detail.html?id=${app.cong_viec_id || ''}" style="color:var(--text-primary);transition:0.2s" onmouseover="this.style.color='var(--primary-light)'" onmouseout="this.style.color='var(--text-primary)'">${app.tieu_de}</a>
+                      </div>
+                      <div class="text-slate-500 text-[13px]"> ${app.ten_cong_ty}</div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;flex-wrap:wrap">
+                      ${isDaChon ? `<span style="background:rgba(99,102,241,0.12);color:var(--primary-light);border:1px solid rgba(99,102,241,0.3);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700"> Đã chọn làm việc</span>` : ''}
+                      <span class="badge ${statusInfo.class}">${statusInfo.icon} ${statusInfo.label}</span>
+                    </div>
+                  </div>
+
+                  <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap">
+                    <span class="text-slate-500 text-[13px]"> ${formatSalary(app.muc_luong_min, app.muc_luong_max)}</span>
+                    <span class="text-slate-500 text-[13px]"> ${app.dia_chi || 'Linh hoạt'}</span>
+                    <span class="text-slate-500 text-[13px]"> ${getJobTypeLabel(app.loai_hinh)}</span>
+                    <span class="text-slate-500 text-[13px]">🗓️ Nộp: ${formatRelativeTime(app.ngay_ung_tuyen)}</span>
+                  </div>
+
+                  ${app.thu_gioi_thieu ? `
+                    <div style="margin-top:12px;padding:12px;background:rgba(0,0,0,0.02);border-radius:8px;border-left:3px solid var(--border)">
+                      <div class="text-slate-500 text-[13px] mb-8">📝 Thư giới thiệu:</div>
+                      <div style="font-size:13px;color:var(--text-slate-600);line-height:1.6">${app.thu_gioi_thieu.length > 200 ? app.thu_gioi_thieu.substring(0,200) + '...' : app.thu_gioi_thieu}</div>
+                    </div>
+                  ` : ''}
+
+                  ${isChapNhan && !isDaChon && soChapNhan >= 2 ? `
+                    <div style="margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                      ${app.han_xac_nhan ? `<span style="font-size:12px;color:#f59e0b;font-weight:600">⏰ Hạn xác nhận: ${formatDeadline(app.han_xac_nhan)}</span>` : ''}
+                      <button onclick="chonViec(${app.id}, '${app.ten_cong_ty.replace(/'/g,"\\'")}', '${app.tieu_de.replace(/'/g,"\\'")}', this)"
+                        style="background:var(--gradient-primary);color:white;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s"
+                        onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                         Chọn làm việc tại đây
+                      </button>
+                    </div>
+                  ` : ''}
+
+                  ${isChapNhan && !isDaChon && soChapNhan < 2 ? `
+                    <div style="margin-top:12px;padding:12px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:8px;font-size:13px;color:var(--success)">
+                      🎊 Chúc mừng! Hồ sơ của bạn đã được chấp nhận. Vui lòng chờ nhà tuyển dụng liên hệ.
+                      ${app.han_xac_nhan ? `<div style="margin-top:6px;font-weight:600;color:#f59e0b">⏰ Hạn xác nhận: ${formatDeadline(app.han_xac_nhan)}</div>` : ''}
+                    </div>
+                  ` : ''}
+
+                  ${isDaChon ? `
+                    <div style="margin-top:12px;padding:12px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.25);border-radius:8px;font-size:13px;color:var(--primary-light)">
+                       Bạn đã xác nhận nhận việc tại đây. Chờ nhà tuyển dụng liên hệ để xác nhận ngày bắt đầu.
+                    </div>
+                  ` : ''}
+
+                  ${app.trang_thai === 'tu_choi' ? `
+                    <div style="margin-top:12px;padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;font-size:13px;color:var(--danger)">
+                      😔 Hồ sơ chưa phù hợp lần này. Đừng nản lòng, hãy thử các công việc khác!
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function formatDeadline(dateStr) {
+      if (!dateStr) return '';
+      const deadline = new Date(dateStr);
+      const now = new Date();
+      const diff = deadline - now;
+      if (diff <= 0) return 'Đã hết hạn';
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      if (days > 0) return `còn ${days} ngày ${hours} giờ`;
+      return `còn ${hours} giờ`;
+    }
+
+    async function chonViec(ungTuyenId, tenCongTy, tieuDe, btn) {
+      if (!confirm(`Bạn chắc chắn muốn chọn làm việc tại "${tenCongTy}" — ${tieuDe}?\n\nSau khi xác nhận, bạn có thể thay đổi lại nếu cần.`)) return;
+      btn.disabled = true;
+      btn.textContent = 'Đang xử lý...';
+      try {
+        await API.apply.chonViec(ungTuyenId);
+        showToast(`Đã xác nhận làm việc tại ${tenCongTy}! 🎉`, 'success');
+        await loadApplications();
+      } catch(e) {
+        showToast(e.message || 'Có lỗi xảy ra.', 'error');
+        btn.disabled = false;
+        btn.textContent = ' Chọn làm việc tại đây';
+      }
+    }
+
+    loadApplications();
+  </script>
+</body>
+</html>
