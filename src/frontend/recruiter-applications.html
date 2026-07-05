@@ -211,7 +211,6 @@
 
                   <div style="display:flex;gap:8px;flex-wrap:wrap">
                     <button onclick="viewCandidate(${a.ung_vien_id})" style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;color:var(--primary-light);font-weight:600">👤 Xem hồ sơ</button>
-                    ${a.cv_file_name ? `<a href="/api/apply/cv/${a.id}" style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:6px 14px;font-size:13px;color:#10b981;font-weight:600;text-decoration:none">⬇️ Tải CV</a>` : ''}
                     ${a.trang_thai === 'cho_duyet' ? `
                       <button onclick="updateStatus(${a.id},'chap_nhan',this)" style="background:#10b981;border:none;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;color:white;font-weight:600">✓ Chấp nhận</button>
                       <button onclick="updateStatus(${a.id},'tu_choi',this)" style="background:#ef4444;border:none;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;color:white;font-weight:600">✗ Từ chối</button>

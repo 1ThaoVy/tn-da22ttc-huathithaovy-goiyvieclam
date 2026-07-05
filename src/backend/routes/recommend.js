@@ -194,7 +194,7 @@ router.get('/candidates/:jobId', authMiddleware, recruiterOrAdmin, async (req, r
       return res.status(404).json({ success: false, message: 'Không tìm thấy công việc.' });
     }
 
-    if (!isAdmin && jobRows[0].nha_tuyen_dung_id !== userId) {
+    if (!isAdmin && jobRows[0].nha_tuyen_dung_id != userId) {
       return res.status(403).json({ success: false, message: 'Bạn không có quyền xem gợi ý ứng viên cho công việc này.' });
     }
 

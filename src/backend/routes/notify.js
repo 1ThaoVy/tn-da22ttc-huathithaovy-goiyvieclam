@@ -18,6 +18,16 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
+// PATCH /api/notify/doc-tat — Đánh dấu tất cả đã đọc (phải đặt TRƯỚC /:id/doc)
+router.patch('/doc-tat', authMiddleware, async (req, res) => {
+  try {
+    await db.query('UPDATE thong_bao SET da_doc = 1 WHERE nguoi_nhan_id = ?', [req.user.id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Loi server.' });
+  }
+});
+
 // PATCH /api/notify/:id/doc — Đánh dấu đã đọc
 router.patch('/:id/doc', authMiddleware, async (req, res) => {
   try {
@@ -25,16 +35,6 @@ router.patch('/:id/doc', authMiddleware, async (req, res) => {
       'UPDATE thong_bao SET da_doc = 1 WHERE id = ? AND nguoi_nhan_id = ?',
       [req.params.id, req.user.id]
     );
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Loi server.' });
-  }
-});
-
-// PATCH /api/notify/doc-tat — Đánh dấu tất cả đã đọc
-router.patch('/doc-tat', authMiddleware, async (req, res) => {
-  try {
-    await db.query('UPDATE thong_bao SET da_doc = 1 WHERE nguoi_nhan_id = ?', [req.user.id]);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Loi server.' });

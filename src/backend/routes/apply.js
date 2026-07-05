@@ -25,26 +25,7 @@ router.get('/my', authMiddleware, async (req, res) => {
   }
 });
 
-// GET /api/apply/cv/:id
-router.get('/cv/:id', authMiddleware, async (req, res) => {
-  try {
-    const [rows] = await db.query(
-      'SELECT cv_file_name, cv_file_data FROM ung_tuyen WHERE id = ?',
-      [req.params.id]
-    );
-    if (!rows.length || !rows[0].cv_file_data) {
-      return res.status(404).json({ success: false, message: 'Khong co file CV.' });
-    }
-    const { cv_file_name, cv_file_data } = rows[0];
-    res.setHeader('Content-Disposition', `attachment; filename="${cv_file_name || 'cv.docx'}"`);
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-    res.send(cv_file_data);
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Loi server.' });
-  }
-});
-
-// GET /api/apply/check/:jobId
+// GET /api/apply/check/:jobId — phải đặt TRƯỚC /:id/cv để tránh conflict
 router.get('/check/:jobId', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
@@ -54,6 +35,32 @@ router.get('/check/:jobId', authMiddleware, async (req, res) => {
       [userId, jobId]
     );
     res.json({ success: true, applied: rows.length > 0, status: rows[0] ? rows[0].trang_thai : null });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Loi server.' });
+  }
+});
+
+// GET /api/apply/:id/cv — Download CV đính kèm (recruiter/admin)
+router.get('/:id/cv', authMiddleware, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT ut.cv_file_name, ut.cv_file_data, cv.nha_tuyen_dung_id
+       FROM ung_tuyen ut
+       JOIN cong_viec cv ON ut.cong_viec_id = cv.id
+       WHERE ut.id = ?`,
+      [req.params.id]
+    );
+    if (!rows.length || !rows[0].cv_file_data) {
+      return res.status(404).json({ success: false, message: 'Không có file CV.' });
+    }
+    const row = rows[0];
+    // Chỉ cho phép nhà tuyển dụng sở hữu job hoặc admin tải
+    if (req.user.vai_tro !== 'admin' && row.nha_tuyen_dung_id != req.user.id) {
+      return res.status(403).json({ success: false, message: 'Không có quyền.' });
+    }
+    res.setHeader('Content-Disposition', `attachment; filename="${row.cv_file_name || 'cv.docx'}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.send(row.cv_file_data);
   } catch (error) {
     res.status(500).json({ success: false, message: 'Loi server.' });
   }
@@ -130,9 +137,18 @@ router.post('/:jobId', authMiddleware, async (req, res) => {
     if (existing.length > 0) {
       return res.status(409).json({ success: false, message: 'Ban da ung tuyen cong viec nay roi.' });
     }
+
+    // Xử lý file CV (base64 → Buffer)
+    let cvBuffer = null;
+    let cvName = null;
+    if (cv_file_data && cv_file_name) {
+      cvBuffer = Buffer.from(cv_file_data, 'base64');
+      cvName = cv_file_name;
+    }
+
     await db.query(
       'INSERT INTO ung_tuyen (nguoi_dung_id, cong_viec_id, thu_gioi_thieu, cv_file_name, cv_file_data) VALUES (?, ?, ?, ?, ?)',
-      [userId, jobId, thu_gioi_thieu || null, cv_file_name || null, cv_file_data ? Buffer.from(cv_file_data, 'base64') : null]
+      [userId, jobId, thu_gioi_thieu || null, cvName, cvBuffer]
     );
     res.status(201).json({ success: true, message: 'Ung tuyen thanh cong! Chuc ban may man!' });
   } catch (error) {

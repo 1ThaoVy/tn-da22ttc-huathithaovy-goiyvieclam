@@ -177,7 +177,7 @@
                   <button onclick="updateStatus(${a.id},'chap_nhan',this)" style="background:#10b981;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:white;font-weight:600">✓ Duyệt</button>
                   <button onclick="updateStatus(${a.id},'tu_choi',this)" style="background:#ef4444;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:white;font-weight:600">✗ Từ chối</button>
                 ` : ''}
-                ${a.cv_file_name ? `` : ''}
+                ${a.cv_file_name ? `<a href="/api/apply/${a.id}/cv" target="_blank" style="background:rgba(99,102,241,0.1);color:#6366f1;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600;text-decoration:none">📄 CV</a>` : ''}
                 <button onclick="deleteApp(${a.id})" style="background:rgba(239,68,68,0.1);color:#ef4444;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600">🗑️</button>
               </div>
             </td>
@@ -264,6 +264,7 @@
               <div style="background:#f8fafc;border-radius:10px;padding:14px;font-size:13px;color:#1e293b;line-height:1.7;white-space:pre-wrap">${a.thu_gioi_thieu}</div>
             </div>` : ''}
           <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${a.cv_file_name ? `<a href="/api/apply/${a.id}/cv" target="_blank" style="background:rgba(99,102,241,0.1);color:#6366f1;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none">📄 Tải CV</a>` : ''}
             ${a.trang_thai === 'cho_duyet' ? `
               <button onclick="this.closest('[style*=fixed]').remove();updateStatus(${a.id},'chap_nhan',this)" style="background:#10b981;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer">✓ Chấp nhận</button>
               <button onclick="this.closest('[style*=fixed]').remove();updateStatus(${a.id},'tu_choi',this)" style="background:#ef4444;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer">✗ Từ chối</button>

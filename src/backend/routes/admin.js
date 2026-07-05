@@ -218,7 +218,7 @@ router.patch('/applications/:id', authMiddleware, recruiterOrAdmin, async (req, 
       if (appRows.length === 0) {
         return res.status(404).json({ success: false, message: 'Không tìm thấy đơn ứng tuyển.' });
       }
-      if (appRows[0].nha_tuyen_dung_id !== req.user.id) {
+      if (appRows[0].nha_tuyen_dung_id != req.user.id) {
         return res.status(403).json({ success: false, message: 'Bạn không có quyền cập nhật đơn ứng tuyển này.' });
       }
     }

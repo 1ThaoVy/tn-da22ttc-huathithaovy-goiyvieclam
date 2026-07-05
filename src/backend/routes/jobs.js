@@ -219,7 +219,7 @@ router.put('/:id', authMiddleware, recruiterOrAdmin, async (req, res) => {
       if (jobRows.length === 0) {
         return res.status(404).json({ success: false, message: 'Không tìm thấy công việc.' });
       }
-      if (jobRows[0].nha_tuyen_dung_id !== req.user.id) {
+      if (jobRows[0].nha_tuyen_dung_id != req.user.id) {
         return res.status(403).json({ success: false, message: 'Bạn không có quyền chỉnh sửa công việc này.' });
       }
     }
@@ -262,25 +262,42 @@ router.put('/:id', authMiddleware, recruiterOrAdmin, async (req, res) => {
 
 // DELETE /api/jobs/:id — Xóa công việc
 router.delete('/:id', authMiddleware, recruiterOrAdmin, async (req, res) => {
+  const conn = await db.getConnection();
   try {
     const jobId = req.params.id;
 
     // Check ownership if recruiter
     if (req.user.vai_tro !== 'admin') {
-      const [jobRows] = await db.query('SELECT nha_tuyen_dung_id FROM cong_viec WHERE id = ?', [jobId]);
+      const [jobRows] = await conn.query('SELECT nha_tuyen_dung_id FROM cong_viec WHERE id = ?', [jobId]);
       if (jobRows.length === 0) {
+        conn.release();
         return res.status(404).json({ success: false, message: 'Không tìm thấy công việc.' });
       }
-      if (jobRows[0].nha_tuyen_dung_id !== req.user.id) {
+      if (jobRows[0].nha_tuyen_dung_id != req.user.id) {
+        conn.release();
         return res.status(403).json({ success: false, message: 'Bạn không có quyền xóa công việc này.' });
       }
     }
 
-    await db.query('DELETE FROM cong_viec WHERE id = ?', [jobId]);
+    await conn.beginTransaction();
+    await conn.query('DELETE FROM ky_nang_cong_viec WHERE cong_viec_id = ?', [jobId]);
+    await conn.query('DELETE FROM luu_cong_viec WHERE cong_viec_id = ?', [jobId]);
+    // Lấy danh sách ung_tuyen để xóa thong_bao liên quan
+    const [appRows] = await conn.query('SELECT id FROM ung_tuyen WHERE cong_viec_id = ?', [jobId]);
+    for (const app of appRows) {
+      await conn.query('DELETE FROM thong_bao WHERE lien_ket LIKE ?', [`%/my-applications%`]);
+    }
+    await conn.query('DELETE FROM ung_tuyen WHERE cong_viec_id = ?', [jobId]);
+    await conn.query('DELETE FROM cong_viec WHERE id = ?', [jobId]);
+    await conn.commit();
+
     res.json({ success: true, message: 'Đã xóa công việc.' });
   } catch (error) {
+    await conn.rollback();
     console.error('Delete job error:', error);
     res.status(500).json({ success: false, message: 'Lỗi server. Vui lòng thử lại.' });
+  } finally {
+    conn.release();
   }
 });
 

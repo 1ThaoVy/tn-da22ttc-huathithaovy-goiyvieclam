@@ -171,7 +171,7 @@
                     </div>
                   ` : ''}
 
-                  ${isChapNhan && !isDaChon && soChapNhan >= 2 ? `
+                  ${isChapNhan && !isDaChon && soChapNhan >= 2 && !daCoChon ? `
                     <div style="margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
                       ${app.han_xac_nhan ? `<span style="font-size:12px;color:#f59e0b;font-weight:600">⏰ Hạn xác nhận: ${formatDeadline(app.han_xac_nhan)}</span>` : ''}
                       <button onclick="chonViec(${app.id}, '${app.ten_cong_ty.replace(/'/g,"\\'")}', '${app.tieu_de.replace(/'/g,"\\'")}', this)"
