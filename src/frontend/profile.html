@@ -1010,86 +1010,246 @@
     // ===== XUẤT WORD =====
     async function exportToWord() {
       const user = getUser();
-      const ten = document.getElementById('profileName').textContent || user?.ten || 'Ho So';
-      const email = document.getElementById('f_email').value || '';
-      const phone = document.getElementById('f_phone').value || '';
-      const address = document.getElementById('f_address').value || '';
-      const moTa = document.getElementById('f_moTa').value || '';
-      const kinhNghiem = document.getElementById('f_kinhNghiem').value || '';
-      const hocVan = document.getElementById('f_hocVan').value || '';
-      const github = document.getElementById('f_github').value || '';
+      const ten     = document.getElementById('profileName').textContent.trim() || user?.ten || 'Ho So';
+      const email   = document.getElementById('f_email').value.trim()   || '';
+      const phone   = document.getElementById('f_phone').value.trim()   || '';
+      const address = document.getElementById('f_address').value.trim() || '';
+      const moTa      = document.getElementById('f_moTa').value.trim()      || '';
+      const kinhNghiem= document.getElementById('f_kinhNghiem').value.trim()|| '';
+      const hocVan    = document.getElementById('f_hocVan').value.trim()    || '';
+      const github    = document.getElementById('f_github').value.trim()    || '';
 
-      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      // ---- helpers ----
+      const esc = s => String(s)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;');
 
-      const makeHeading = (text) => `
+      // Đường kẻ ngang (border) màu indigo phân cách section
+      const makeDivider = () => `
         <w:p>
-          <w:pPr><w:pStyle w:val="Heading2"/><w:spacing w:before="240" w:after="80"/></w:pPr>
-          <w:r><w:rPr><w:b/><w:color w:val="6366f1"/><w:sz w:val="26"/></w:rPr><w:t>${esc(text)}</w:t></w:r>
+          <w:pPr>
+            <w:spacing w:before="40" w:after="40"/>
+            <w:pBdr>
+              <w:bottom w:val="single" w:sz="8" w:space="1" w:color="6366f1"/>
+            </w:pBdr>
+          </w:pPr>
         </w:p>`;
 
-      const makeLines = (text) => text.split('\n').filter(l => l.trim()).map(line => `
+      // Tiêu đề section: chữ hoa, đậm, màu indigo, cỡ 13pt
+      const makeHeading = (text) => `
         <w:p>
-          <w:pPr><w:spacing w:after="60"/></w:pPr>
-          <w:r><w:rPr><w:sz w:val="24"/></w:rPr><w:t xml:space="preserve">${esc(line)}</w:t></w:r>
+          <w:pPr><w:spacing w:before="280" w:after="100"/></w:pPr>
+          <w:r>
+            <w:rPr>
+              <w:b/><w:caps/>
+              <w:color w:val="4F46E5"/>
+              <w:sz w:val="26"/>
+              <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/>
+            </w:rPr>
+            <w:t>${esc(text)}</w:t>
+          </w:r>
+        </w:p>
+        ${makeDivider()}`;
+
+      // Nội dung nhiều dòng, mỗi dòng là 1 đoạn văn
+      const makeLines = (text) => text.split('\n').map(line => `
+        <w:p>
+          <w:pPr>
+            <w:spacing w:after="80"/>
+            <w:ind w:left="200"/>
+          </w:pPr>
+          <w:r>
+            <w:rPr>
+              <w:sz w:val="22"/>
+              <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/>
+              <w:color w:val="1E293B"/>
+            </w:rPr>
+            <w:t xml:space="preserve">${esc(line) || ' '}</w:t>
+          </w:r>
         </w:p>`).join('');
 
       const makeSection = (title, content) => content.trim()
-        ? makeHeading(title) + makeLines(content) : '';
-
-      const skillsText = userSkills.length
-        ? userSkills.map(s => `${s.ten_ky_nang} (${getLevelLabel(s.muc_do).replace(/⭐/g,'').trim()})`).join('  •  ')
+        ? makeHeading(title) + makeLines(content) + `<w:p><w:pPr><w:spacing w:after="60"/></w:pPr></w:p>`
         : '';
 
-      const contactLine = [email, phone, address].filter(Boolean).join('   |   ');
+      // Dòng thông tin liên hệ, mỗi mục có icon unicode
+      const contactItems = [
+        email   ? `✉  ${email}`   : '',
+        phone   ? `☎  ${phone}`   : '',
+        address ? `⌂  ${address}` : '',
+      ].filter(Boolean);
 
+      const makeContactLine = (items) => items.map(item => `
+        <w:p>
+          <w:pPr><w:jc w:val="center"/><w:spacing w:after="40"/></w:pPr>
+          <w:r>
+            <w:rPr>
+              <w:sz w:val="20"/>
+              <w:color w:val="64748B"/>
+              <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/>
+            </w:rPr>
+            <w:t>${esc(item)}</w:t>
+          </w:r>
+        </w:p>`).join('');
+
+      // Kỹ năng: bảng 3 cột (tên | danh mục | mức độ)
+      const makeSkillsTable = () => {
+        if (!userSkills.length) return '';
+        const levelText = lvl => ['','Mới biết','Cơ bản','Trung bình','Thành thạo','Chuyên gia'][lvl] || lvl;
+        const cell = (text, bold = false, bg = 'FFFFFF') => `
+          <w:tc>
+            <w:tcPr>
+              <w:shd w:val="clear" w:color="auto" w:fill="${bg}"/>
+              <w:tcMar>
+                <w:top w:w="80" w:type="dxa"/>
+                <w:bottom w:w="80" w:type="dxa"/>
+                <w:left w:w="120" w:type="dxa"/>
+                <w:right w:w="120" w:type="dxa"/>
+              </w:tcMar>
+            </w:tcPr>
+            <w:p>
+              <w:r>
+                <w:rPr>
+                  ${bold ? '<w:b/>' : ''}
+                  <w:sz w:val="20"/>
+                  <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/>
+                  <w:color w:val="${bold ? '4F46E5' : '1E293B'}"/>
+                </w:rPr>
+                <w:t>${esc(text)}</w:t>
+              </w:r>
+            </w:p>
+          </w:tc>`;
+
+        const headerRow = `
+          <w:tr>
+            ${cell('Tên kỹ năng', true, 'EEF2FF')}
+            ${cell('Danh mục', true, 'EEF2FF')}
+            ${cell('Mức độ', true, 'EEF2FF')}
+          </w:tr>`;
+
+        const dataRows = userSkills.map((s, i) => {
+          const bg = i % 2 === 0 ? 'FFFFFF' : 'F8FAFC';
+          return `
+          <w:tr>
+            ${cell(s.ten_ky_nang || '', false, bg)}
+            ${cell(s.danh_muc || '', false, bg)}
+            ${cell(levelText(s.muc_do), false, bg)}
+          </w:tr>`;
+        }).join('');
+
+        return `
+          <w:tbl>
+            <w:tblPr>
+              <w:tblStyle w:val="TableGrid"/>
+              <w:tblW w:w="0" w:type="auto"/>
+              <w:tblBorders>
+                <w:top    w:val="single" w:sz="4" w:color="C7D2FE"/>
+                <w:left   w:val="single" w:sz="4" w:color="C7D2FE"/>
+                <w:bottom w:val="single" w:sz="4" w:color="C7D2FE"/>
+                <w:right  w:val="single" w:sz="4" w:color="C7D2FE"/>
+                <w:insideH w:val="single" w:sz="4" w:color="C7D2FE"/>
+                <w:insideV w:val="single" w:sz="4" w:color="C7D2FE"/>
+              </w:tblBorders>
+              <w:tblCellMar>
+                <w:top    w:w="60"  w:type="dxa"/>
+                <w:bottom w:w="60"  w:type="dxa"/>
+                <w:left   w:w="120" w:type="dxa"/>
+                <w:right  w:w="120" w:type="dxa"/>
+              </w:tblCellMar>
+            </w:tblPr>
+            ${headerRow}
+            ${dataRows}
+          </w:tbl>
+          <w:p><w:pPr><w:spacing w:after="60"/></w:pPr></w:p>`;
+      };
+
+      // ---- Nội dung chính ----
       const bodyXml = `
+        <!-- Tên -->
         <w:p>
-          <w:pPr><w:jc w:val="center"/><w:spacing w:after="80"/></w:pPr>
-          <w:r><w:rPr><w:b/><w:sz w:val="52"/><w:color w:val="6366f1"/></w:rPr><w:t>${esc(ten)}</w:t></w:r>
+          <w:pPr>
+            <w:jc w:val="center"/>
+            <w:spacing w:before="0" w:after="100"/>
+            <w:shd w:val="clear" w:color="auto" w:fill="EEF2FF"/>
+          </w:pPr>
+          <w:r>
+            <w:rPr>
+              <w:b/><w:caps/>
+              <w:sz w:val="52"/>
+              <w:color w:val="4F46E5"/>
+              <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/>
+            </w:rPr>
+            <w:t>${esc(ten)}</w:t>
+          </w:r>
         </w:p>
-        <w:p>
-          <w:pPr><w:jc w:val="center"/><w:spacing w:after="320"/></w:pPr>
-          <w:r><w:rPr><w:sz w:val="20"/><w:color w:val="64748b"/></w:rPr><w:t>${esc(contactLine)}</w:t></w:r>
-        </w:p>
-        ${makeSection('GIỚI THIỆU BẢN THÂN', moTa)}
-        ${makeSection('KINH NGHIỆM LÀM VIỆC', kinhNghiem)}
-        ${makeSection('HỌC VẤN', hocVan)}
-        ${github ? makeSection('GITHUB', github) : ''}
-        ${skillsText ? makeHeading('KỸ NĂNG') + `<w:p><w:pPr><w:spacing w:after="60"/></w:pPr><w:r><w:rPr><w:sz w:val="24"/></w:rPr><w:t xml:space="preserve">${esc(skillsText)}</w:t></w:r></w:p>` : ''}
+
+        <!-- Thông tin liên hệ -->
+        ${makeContactLine(contactItems)}
+
+        <!-- Khoảng trống trước section đầu -->
+        <w:p><w:pPr><w:spacing w:after="120"/></w:pPr></w:p>
+
+        ${makeSection('Giới thiệu bản thân', moTa)}
+        ${makeSection('Kinh nghiệm làm việc', kinhNghiem)}
+        ${makeSection('Học vấn', hocVan)}
+        ${github ? makeSection('GitHub / Portfolio', github) : ''}
+
+        ${userSkills.length ? makeHeading('Kỹ năng') + makeSkillsTable() : ''}
       `;
 
+      // ---- XML files ----
       const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
-  xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
-  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <w:body>
     ${bodyXml}
     <w:sectPr>
-      <w:pgMar w:top="1080" w:right="1080" w:bottom="1080" w:left="1080"/>
+      <w:pgSz w:w="12240" w:h="15840"/>
+      <w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134"/>
     </w:sectPr>
   </w:body>
 </w:document>`;
+
+      const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:docDefaults>
+    <w:rPrDefault>
+      <w:rPr>
+        <w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/>
+        <w:sz w:val="22"/>
+        <w:color w:val="1E293B"/>
+      </w:rPr>
+    </w:rPrDefault>
+    <w:pPrDefault>
+      <w:pPr><w:spacing w:after="100" w:line="276" w:lineRule="auto"/></w:pPr>
+    </w:pPrDefault>
+  </w:docDefaults>
+  <w:style w:type="table" w:styleId="TableGrid">
+    <w:name w:val="Table Grid"/>
+    <w:tblPr>
+      <w:tblBorders>
+        <w:top    w:val="single" w:sz="4" w:color="C7D2FE"/>
+        <w:left   w:val="single" w:sz="4" w:color="C7D2FE"/>
+        <w:bottom w:val="single" w:sz="4" w:color="C7D2FE"/>
+        <w:right  w:val="single" w:sz="4" w:color="C7D2FE"/>
+        <w:insideH w:val="single" w:sz="4" w:color="C7D2FE"/>
+        <w:insideV w:val="single" w:sz="4" w:color="C7D2FE"/>
+      </w:tblBorders>
+    </w:tblPr>
+  </w:style>
+</w:styles>`;
 
       const relsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
 </Relationships>`;
 
-      const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
-  <w:style w:type="paragraph" w:styleId="Heading2">
-    <w:name w:val="heading 2"/>
-    <w:pPr><w:spacing w:before="240" w:after="80"/></w:pPr>
-    <w:rPr><w:b/><w:sz w:val="26"/></w:rPr>
-  </w:style>
-</w:styles>`;
-
       const contentTypesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <Default Extension="xml" ContentType="application/xml"/>
+  <Default Extension="xml"  ContentType="application/xml"/>
   <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
-  <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+  <Override PartName="/word/styles.xml"   ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
 </Types>`;
 
       const rootRelsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -1104,11 +1264,14 @@
       zip.file('word/styles.xml', stylesXml);
       zip.file('word/_rels/document.xml.rels', relsXml);
 
-      const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      const blob = await zip.generateAsync({
+        type: 'blob',
+        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `HoSo_${ten.replace(/\s+/g, '_')}.docx`;
+      a.download = `HoSo_${ten.replace(/\s+/g,'_')}.docx`;
       a.click();
       URL.revokeObjectURL(url);
       showToast('Xuất file Word thành công!', 'success');
