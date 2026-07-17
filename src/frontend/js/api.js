@@ -77,6 +77,7 @@ const API = {
     addSkill: (data) => apiFetch('/users/skills', { method: 'POST', body: data }),
     removeSkill: (skillId) => apiFetch(`/users/skills/${skillId}`, { method: 'DELETE' }),
     getAllSkills: () => apiFetch('/users/all-skills'),
+    createSkill: (data) => apiFetch('/users/create-skill', { method: 'POST', body: data }),
     getSavedJobs: () => apiFetch('/users/saved-jobs'),
     saveJob: (jobId) => apiFetch(`/users/saved-jobs/${jobId}`, { method: 'POST' }),
     unsaveJob: (jobId) => apiFetch(`/users/saved-jobs/${jobId}`, { method: 'DELETE' }),

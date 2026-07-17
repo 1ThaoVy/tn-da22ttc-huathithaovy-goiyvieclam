@@ -200,12 +200,44 @@ router.delete('/saved-jobs/:jobId', authMiddleware, async (req, res) => {
   }
 });
 
-// GET /api/skills/all — Danh sách tất cả kỹ năng (để autocomplete)
+// GET /api/users/all-skills — Danh sách tất cả kỹ năng (để autocomplete)
 router.get('/all-skills', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT * FROM ky_nang ORDER BY danh_muc, ten_ky_nang');
     res.json({ success: true, skills: rows });
   } catch (error) {
+    res.status(500).json({ success: false, message: 'Lỗi server.' });
+  }
+});
+
+// POST /api/users/create-skill — Tạo kỹ năng mới vào danh mục (dùng cho nhà tuyển dụng)
+router.post('/create-skill', authMiddleware, async (req, res) => {
+  try {
+    const { ten_ky_nang, danh_muc } = req.body;
+    if (!ten_ky_nang || !ten_ky_nang.trim()) {
+      return res.status(400).json({ success: false, message: 'Tên kỹ năng không được để trống.' });
+    }
+
+    const name = ten_ky_nang.trim();
+
+    // Kiểm tra đã tồn tại chưa
+    const [existing] = await db.query(
+      'SELECT id, ten_ky_nang, danh_muc FROM ky_nang WHERE ten_ky_nang = ?',
+      [name]
+    );
+    if (existing.length > 0) {
+      return res.json({ success: true, skill: existing[0], isNew: false });
+    }
+
+    const [result] = await db.query(
+      'INSERT INTO ky_nang (ten_ky_nang, danh_muc) VALUES (?, ?)',
+      [name, danh_muc || 'Khác']
+    );
+
+    const [rows] = await db.query('SELECT id, ten_ky_nang, danh_muc FROM ky_nang WHERE id = ?', [result.insertId]);
+    res.json({ success: true, skill: rows[0], isNew: true });
+  } catch (error) {
+    console.error('Create skill error:', error);
     res.status(500).json({ success: false, message: 'Lỗi server.' });
   }
 });

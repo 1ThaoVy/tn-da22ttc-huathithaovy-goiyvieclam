@@ -663,18 +663,36 @@
 
     function searchJobSkill(q) {
       const dd = document.getElementById('j_skill_dropdown');
-      if (!q) { dd.style.display = 'none'; return; }
+      if (!q || q.length < 1) { dd.style.display = 'none'; jobSkillSelectedId = null; return; }
+
       const filtered = allSkills.filter(s =>
         s.ten_ky_nang.toLowerCase().includes(q.toLowerCase()) &&
         !jobSkills.find(js => js.ky_nang_id === s.id)
       ).slice(0, 8);
-      dd.style.display = filtered.length ? 'block' : 'none';
-      dd.innerHTML = filtered.map(s => `
+
+      dd.style.display = 'block';
+      let html = filtered.map(s => `
         <div style="padding:10px 14px;cursor:pointer;font-size:13px;transition:0.15s"
           onmouseenter="this.style.background='rgba(99,102,241,0.1)'" onmouseleave="this.style.background=''"
           onmousedown="pickJobSkill(${s.id},'${s.ten_ky_nang.replace(/'/g,"\\'")}')">
-          <strong>${s.ten_ky_nang}</strong> <span style="color:var(--text-slate-500);font-size:12px">${s.danh_muc}</span>
+          <strong>${s.ten_ky_nang}</strong> <span style="color:var(--text-slate-500);font-size:12px">${s.danh_muc || ''}</span>
         </div>`).join('');
+
+      // Nếu không khớp kỹ năng nào và đã nhập ít nhất 2 ký tự → gợi ý tạo mới
+      if (filtered.length === 0 && q.length >= 2) {
+        html = `<div style="padding:10px 14px;cursor:pointer;color:var(--primary-light);font-size:13px"
+          onmousedown="pickNewJobSkill('${q.replace(/'/g,"\\'")}')">
+          ➕ Thêm kỹ năng mới: "<strong>${q}</strong>"
+        </div>`;
+      } else if (q.length >= 2) {
+        // Thêm option tạo mới ở cuối danh sách
+        html += `<div style="padding:8px 14px;cursor:pointer;color:var(--primary-light);font-size:12px;border-top:1px solid var(--border)"
+          onmousedown="pickNewJobSkill('${q.replace(/'/g,"\\'")}')">
+          ➕ Thêm kỹ năng mới: "<strong>${q}</strong>"
+        </div>`;
+      }
+
+      dd.innerHTML = html;
     }
 
     function pickJobSkill(id, name) {
@@ -683,15 +701,52 @@
       document.getElementById('j_skill_dropdown').style.display = 'none';
     }
 
-    function addJobSkill() {
+    // Chọn thêm kỹ năng mới chưa có trong danh sách
+    function pickNewJobSkill(name) {
+      jobSkillSelectedId = null; // null = tạo mới
+      document.getElementById('j_skill_input').value = name;
+      document.getElementById('j_skill_dropdown').style.display = 'none';
+    }
+
+    async function addJobSkill() {
       const name = document.getElementById('j_skill_input').value.trim();
       const level = parseInt(document.getElementById('j_skill_level').value);
-      if (!name || !jobSkillSelectedId) { showToast('Vui lòng chọn kỹ năng từ danh sách.', 'warning'); return; }
-      if (jobSkills.find(s => s.ky_nang_id === jobSkillSelectedId)) { showToast('Kỹ năng này đã được thêm.', 'warning'); return; }
-      jobSkills.push({ ky_nang_id: jobSkillSelectedId, ten_ky_nang: name, muc_do: level });
-      document.getElementById('j_skill_input').value = '';
-      jobSkillSelectedId = null;
-      renderJobSkills();
+      if (!name) { showToast('Vui lòng nhập tên kỹ năng.', 'warning'); return; }
+
+      // Nếu đã chọn từ danh sách
+      if (jobSkillSelectedId) {
+        if (jobSkills.find(s => s.ky_nang_id === jobSkillSelectedId)) {
+          showToast('Kỹ năng này đã được thêm.', 'warning'); return;
+        }
+        jobSkills.push({ ky_nang_id: jobSkillSelectedId, ten_ky_nang: name, muc_do: level });
+        document.getElementById('j_skill_input').value = '';
+        jobSkillSelectedId = null;
+        renderJobSkills();
+        return;
+      }
+
+      // Kỹ năng mới: gọi API tạo kỹ năng trước rồi dùng id trả về
+      try {
+        const data = await API.users.createSkill({ ten_ky_nang: name, danh_muc: 'Khác' });
+        const newSkill = data.skill;
+
+        // Thêm vào allSkills để lần sau có thể tìm thấy
+        if (!allSkills.find(s => s.id === newSkill.id)) {
+          allSkills.push(newSkill);
+        }
+
+        if (jobSkills.find(s => s.ky_nang_id === newSkill.id)) {
+          showToast('Kỹ năng này đã được thêm.', 'warning'); return;
+        }
+
+        jobSkills.push({ ky_nang_id: newSkill.id, ten_ky_nang: newSkill.ten_ky_nang, muc_do: level });
+        document.getElementById('j_skill_input').value = '';
+        jobSkillSelectedId = null;
+        renderJobSkills();
+        showToast(`Đã thêm kỹ năng mới "${name}" vào hệ thống!`, 'success');
+      } catch(e) {
+        showToast(e.message || 'Không thêm được kỹ năng.', 'error');
+      }
     }
 
     function removeJobSkill(id) {
